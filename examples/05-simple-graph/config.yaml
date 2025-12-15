@@ -1,0 +1,61 @@
+# Example 05: Simple Sequential Graph
+# A simple graph that chains multiple agents in sequence
+
+id: example-simple-graph
+name: Simple Sequential Graph
+description: Chain agents in sequence for multi-step processing
+difficulty: intermediate
+
+graph:
+  id: simple-sequential-graph
+  name: Research and Summarize
+  type: sequential
+  description: Research a topic and create a summary
+  
+  nodes:
+    - id: research
+      type: agent
+      agent_id: research-agent
+      config:
+        research_depth: quick
+        max_sources: 3
+      
+    - id: summarize
+      type: agent
+      agent_id: conversational-assistant
+      config:
+        verbosity: concise
+        
+  edges:
+    - source: START
+      target: research
+    - source: research
+      target: summarize
+    - source: summarize
+      target: END
+
+  state_schema:
+    topic:
+      type: string
+      description: Research topic
+    research_results:
+      type: string
+      description: Raw research findings
+    summary:
+      type: string
+      description: Final summary
+
+usage: |
+  This example shows a simple sequential graph.
+  
+  The flow:
+  START → research → summarize → END
+  
+  1. User provides a topic
+  2. Research agent gathers information
+  3. Conversational agent summarizes findings
+  4. User receives concise summary
+
+example_prompts:
+  - "Research and summarize the history of the internet"
+  - "Find information about climate change and summarize key points"

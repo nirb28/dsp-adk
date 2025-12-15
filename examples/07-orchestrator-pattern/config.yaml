@@ -1,0 +1,74 @@
+# Example 07: Multi-Agent Orchestration
+# Workflow orchestrator managing multiple specialized agents
+
+id: example-orchestrator
+name: Multi-Agent Orchestration
+description: Orchestrator coordinates multiple agents for complex tasks
+difficulty: advanced
+
+agent:
+  base: workflow-orchestrator
+  config:
+    available_agents:
+      - research-agent
+      - code-assistant
+      - data-analyst
+      - conversational-assistant
+    max_parallel_tasks: 3
+    retry_on_failure: true
+    max_retries: 2
+    timeout_seconds: 300
+    reporting_interval: per_step
+
+skills:
+  - task-decomposition
+
+tools:
+  - http-request
+
+graph:
+  id: orchestrated-workflow
+  name: Orchestrated Multi-Agent Workflow
+  type: orchestrated
+  
+  nodes:
+    - id: orchestrator
+      type: agent
+      agent_id: workflow-orchestrator
+      description: Coordinates the entire workflow
+      
+    - id: research
+      type: agent
+      agent_id: research-agent
+      delegated: true
+      
+    - id: analyze
+      type: agent
+      agent_id: data-analyst
+      delegated: true
+      
+    - id: implement
+      type: agent
+      agent_id: code-assistant
+      delegated: true
+      
+    - id: report
+      type: agent
+      agent_id: conversational-assistant
+      delegated: true
+
+usage: |
+  This example shows the orchestrator pattern for complex tasks.
+  
+  The orchestrator:
+  1. Receives a complex task
+  2. Decomposes it into subtasks (task-decomposition skill)
+  3. Delegates subtasks to specialized agents
+  4. Coordinates parallel execution where possible
+  5. Handles errors and retries
+  6. Aggregates results into final output
+
+example_prompts:
+  - "Research AI trends, analyze market data, and create an investment report"
+  - "Investigate the bug, fix it, test, and document the changes"
+  - "Analyze customer feedback, identify patterns, and suggest improvements"

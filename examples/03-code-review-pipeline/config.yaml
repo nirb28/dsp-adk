@@ -1,0 +1,51 @@
+# Example 03: Code Review Pipeline
+# A code assistant that reads, analyzes, and reviews code files
+
+id: example-code-review
+name: Code Review Pipeline
+description: Code assistant that reads files and provides code reviews
+difficulty: intermediate
+
+agent:
+  base: code-assistant
+  config:
+    languages:
+      - python
+      - javascript
+      - typescript
+    style_guide: PEP8
+    include_tests: true
+    include_docs: true
+    security_check: true
+
+tools:
+  - id: file-operations
+    config:
+      base_path: ./src
+      allowed_extensions:
+        - .py
+        - .js
+        - .ts
+      max_file_size: 1048576
+  - id: text-processor
+    config:
+      operation: extract_entities
+      
+skills:
+  - code-generation
+  - code-review
+
+usage: |
+  This example shows how to build a code review pipeline.
+  
+  The workflow:
+  1. User provides file path or code snippet
+  2. Agent uses file-operations to read the code
+  3. Agent analyzes for bugs, security issues, style
+  4. Agent suggests improvements with examples
+  5. Optionally generates tests for the code
+
+example_prompts:
+  - "Review the code in src/main.py"
+  - "Check this function for security issues"
+  - "Suggest improvements for better performance"

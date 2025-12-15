@@ -1,0 +1,67 @@
+# Example 08: RAG Integration
+# Integrate with vector search for retrieval-augmented generation
+
+id: example-rag-integration
+name: RAG Integration
+description: Use vector search for knowledge-grounded responses
+difficulty: advanced
+
+agent:
+  base: research-agent
+  config:
+    research_depth: deep
+    source_types:
+      - documents
+    output_format: detailed
+    include_citations: true
+
+tools:
+  - id: vector-search
+    config:
+      vector_store: faiss
+      embedding_model: text-embedding-3-small
+      embedding_endpoint: ${EMBEDDING_ENDPOINT}
+      connection_config:
+        index_path: ./data/index
+  - id: text-processor
+    config:
+      operation: summarize
+
+graph:
+  id: rag-qa-graph
+  name: RAG Question Answering
+  type: sequential
+  
+  nodes:
+    - id: retrieve
+      type: tool
+      tool_id: vector-search
+      config:
+        top_k: 5
+        threshold: 0.7
+        
+    - id: generate
+      type: agent
+      agent_id: research-agent
+      
+  edges:
+    - source: START
+      target: retrieve
+    - source: retrieve
+      target: generate
+    - source: generate
+      target: END
+
+usage: |
+  This example shows RAG (Retrieval-Augmented Generation).
+  
+  The flow:
+  1. User asks a question
+  2. Vector search retrieves relevant documents
+  3. Research agent generates answer using context
+  4. Response includes citations from source documents
+
+example_prompts:
+  - "What does our policy say about remote work?"
+  - "Summarize the Q3 financial results"
+  - "What are the key findings from the research paper?"

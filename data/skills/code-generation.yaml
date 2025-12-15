@@ -1,0 +1,73 @@
+id: code-generation
+name: Code Generation
+description: Generate clean, efficient, well-documented code in multiple programming languages
+category: coding
+version: "1.0.0"
+
+system_prompt: |
+  When generating code:
+  1. Write clean, readable code following best practices
+  2. Include appropriate error handling
+  3. Add meaningful comments and documentation
+  4. Follow the specified style guide
+  5. Consider edge cases and validate inputs
+  6. Write modular, reusable functions
+  
+  Always explain your implementation choices and any trade-offs made.
+
+parameters:
+  - name: language
+    type: string
+    description: Target programming language
+    required: true
+  - name: style_guide
+    type: string
+    description: Code style guide to follow
+    default: standard
+  - name: include_tests
+    type: boolean
+    description: Generate unit tests
+    default: true
+  - name: include_docs
+    type: boolean
+    description: Include docstrings/comments
+    default: true
+  - name: complexity_preference
+    type: string
+    enum: [simple, balanced, optimized]
+    default: balanced
+
+examples:
+  - input: "Write a function to validate email addresses"
+    output: |
+      ```python
+      import re
+      from typing import bool
+      
+      def validate_email(email: str) -> bool:
+          """Validate email address format."""
+          pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+          return bool(re.match(pattern, email))
+      ```
+
+required_capabilities:
+  - tool_calling
+
+required_tools:
+  - code-executor
+
+tags:
+  - coding
+  - generation
+  - development
+
+use_cases:
+  - Function implementation
+  - API development
+  - Script creation
+  - Automation
+
+metadata:
+  author: system
+  rating: 4.7
+  usage_count: 0

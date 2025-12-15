@@ -1,0 +1,56 @@
+id: code-executor
+name: Code Executor Tool
+description: Execute Python code in a sandboxed environment
+type: python
+
+parameters:
+  - name: code
+    type: string
+    description: Python code to execute
+    required: true
+  - name: timeout
+    type: integer
+    description: Execution timeout in seconds
+    required: false
+    default: 30
+
+returns:
+  type: object
+  properties:
+    output:
+      type: string
+    error:
+      type: string
+    execution_time:
+      type: number
+
+implementation:
+  module: app.tools.code_executor
+  function: execute_python
+  sandbox: true
+  allowed_imports:
+    - math
+    - json
+    - datetime
+    - collections
+    - itertools
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+  - developers
+allowed_roles:
+  - code_executor
+rate_limit: 10
+
+timeout: 60
+retry_count: 0
+
+tags:
+  - code
+  - execution
+  - python
+
+metadata:
+  version: "1.0"
+  security_level: restricted

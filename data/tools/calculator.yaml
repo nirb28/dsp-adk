@@ -1,0 +1,41 @@
+id: calculator
+name: Calculator Tool
+description: Perform mathematical calculations safely
+type: python
+
+parameters:
+  - name: expression
+    type: string
+    description: Mathematical expression to evaluate (e.g., "2 + 2", "sqrt(16)")
+    required: true
+
+returns:
+  type: object
+  properties:
+    result:
+      type: number
+    expression:
+      type: string
+    error:
+      type: string
+
+implementation:
+  module: app.tools.calculator
+  function: evaluate_expression
+  safe_mode: true
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 100
+
+timeout: 5
+retry_count: 0
+
+tags:
+  - math
+  - calculation
+  - utility
+
+metadata:
+  version: "1.0"

@@ -1,0 +1,158 @@
+id: task-execution-graph
+name: Task Execution Graph
+description: LangGraph workflow for multi-step task execution
+type: langgraph
+
+nodes:
+  - id: start
+    name: Start Node
+    type: start
+    config: {}
+    adapters: []
+    
+  - id: planner
+    name: Task Planner
+    type: agent
+    agent_id: task-executor-agent
+    config:
+      prompt_suffix: "Create a detailed plan for the given task."
+    adapters:
+      - adapter_id: caching-adapter
+        enabled: true
+        config_overrides:
+          ttl_seconds: 600
+    
+  - id: executor
+    name: Step Executor
+    type: agent
+    agent_id: task-executor-agent
+    config:
+      prompt_suffix: "Execute the current step of the plan."
+    adapters:
+      - adapter_id: retry-adapter
+        enabled: true
+    
+  - id: verifier
+    name: Result Verifier
+    type: agent
+    agent_id: task-executor-agent
+    config:
+      prompt_suffix: "Verify the results and determine if the task is complete."
+    adapters: []
+    
+  - id: router
+    name: Completion Router
+    type: router
+    condition: check_completion
+    routes:
+      complete: end
+      continue: executor
+      replan: planner
+    adapters: []
+    
+  - id: end
+    name: End Node
+    type: end
+    config: {}
+    adapters: []
+
+edges:
+  - id: start-to-planner
+    source: start
+    target: planner
+    type: normal
+    
+  - id: planner-to-executor
+    source: planner
+    target: executor
+    type: normal
+    
+  - id: executor-to-verifier
+    source: executor
+    target: verifier
+    type: normal
+    
+  - id: verifier-to-router
+    source: verifier
+    target: router
+    type: normal
+    
+  - id: router-to-end
+    source: router
+    target: end
+    type: conditional
+    condition_value: complete
+    
+  - id: router-to-executor
+    source: router
+    target: executor
+    type: conditional
+    condition_value: continue
+    
+  - id: router-to-planner
+    source: router
+    target: planner
+    type: conditional
+    condition_value: replan
+
+entry_point: start
+
+state_schema:
+  fields:
+    task:
+      type: string
+      description: The task to execute
+    plan:
+      type: array
+      description: List of steps to execute
+    current_step:
+      type: integer
+      default: 0
+    results:
+      type: array
+      description: Results from each step
+    status:
+      type: string
+      default: pending
+  reducer: null
+
+checkpointer: memory
+checkpointer_config: {}
+
+max_iterations: 25
+timeout: 300
+streaming: true
+
+agents:
+  - task-executor-agent
+tools:
+  - code-executor
+  - web-search
+mcp_servers:
+  - filesystem-mcp
+
+# Graph-level adapters applied to all nodes
+adapters:
+  - adapter_id: jwt-security-adapter
+    enabled: true
+  - adapter_id: observability-adapter
+    enabled: true
+  - adapter_id: rate-limiting-adapter
+    enabled: true
+    config_overrides:
+      requests_per_minute: 30
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+allowed_roles:
+  - task_executor
+
+tags:
+  - langgraph
+  - task-execution
+  - workflow
+
+metadata:
+  version: "1.0"
+  author: system

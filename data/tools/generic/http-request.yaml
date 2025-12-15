@@ -1,0 +1,62 @@
+id: http-request
+name: HTTP Request Tool
+description: Make HTTP requests to any API endpoint with configurable method, headers, and body
+type: api
+category: integration
+
+parameters:
+  - name: url
+    type: string
+    description: The URL to send the request to
+    required: true
+  - name: method
+    type: string
+    description: HTTP method
+    required: false
+    default: GET
+    enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS]
+  - name: headers
+    type: object
+    description: HTTP headers as key-value pairs
+    required: false
+    default: {}
+  - name: body
+    type: object
+    description: Request body (for POST, PUT, PATCH)
+    required: false
+  - name: timeout
+    type: integer
+    description: Request timeout in seconds
+    required: false
+    default: 30
+
+config_schema:
+  type: object
+  properties:
+    base_url:
+      type: string
+      description: Base URL to prepend to all requests
+    default_headers:
+      type: object
+      description: Default headers for all requests
+    auth_type:
+      type: string
+      enum: [none, bearer, basic, api_key]
+    auth_env_var:
+      type: string
+      description: Environment variable containing auth credentials
+
+implementation:
+  type: python
+  handler: tools.http_request.execute
+  
+tags:
+  - generic
+  - http
+  - api
+  - integration
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

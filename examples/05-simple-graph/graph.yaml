@@ -1,0 +1,74 @@
+# Graph Definition: Research and Summarize
+# A simple sequential graph that chains two agents
+
+id: research-summarize-graph
+name: Research and Summarize
+type: sequential
+description: Research a topic and create a concise summary
+
+nodes:
+  - id: research
+    name: Research Node
+    type: agent
+    agent_id: research-agent
+    description: Gathers information on the given topic
+    config:
+      research_depth: quick
+      source_types:
+        - web
+      output_format: detailed
+      max_sources: 3
+    input_mapping:
+      query: "$.topic"
+    output_mapping:
+      research_results: "$.response"
+      
+  - id: summarize
+    name: Summarize Node
+    type: agent
+    agent_id: conversational-assistant
+    description: Creates a concise summary of research findings
+    config:
+      verbosity: concise
+      personality: professional
+    input_mapping:
+      prompt: |
+        Please summarize the following research findings in a clear,
+        concise format with key points:
+        
+        {{ research_results }}
+    output_mapping:
+      summary: "$.response"
+
+edges:
+  - source: START
+    target: research
+    
+  - source: research
+    target: summarize
+    
+  - source: summarize
+    target: END
+
+state_schema:
+  type: object
+  properties:
+    topic:
+      type: string
+      description: The topic to research
+    research_results:
+      type: string
+      description: Raw research findings from the research agent
+    summary:
+      type: string
+      description: Final summarized output
+  required:
+    - topic
+
+metadata:
+  version: "1.0.0"
+  author: system
+  tags:
+    - sequential
+    - research
+    - summary

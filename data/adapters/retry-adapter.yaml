@@ -1,0 +1,42 @@
+id: retry-adapter
+name: Retry Adapter
+description: Automatically retries failed operations with exponential backoff
+type: retry
+position: wrap
+enabled: true
+priority: 30
+
+retry:
+  enabled: true
+  max_retries: 3
+  initial_delay_ms: 100
+  max_delay_ms: 10000
+  exponential_backoff: true
+  retry_on_status:
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+  retry_on_exceptions:
+    - TimeoutError
+    - ConnectionError
+    - HTTPError
+
+apply_to_types:
+  - agent
+  - tool
+skip_types:
+  - condition
+  - router
+  - start
+  - end
+
+tags:
+  - retry
+  - resilience
+  - fault-tolerance
+
+metadata:
+  version: "1.0"
+  jitter: true

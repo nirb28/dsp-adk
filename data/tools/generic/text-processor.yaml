@@ -1,0 +1,56 @@
+id: text-processor
+name: Text Processor Tool
+description: Process and transform text with various operations like summarize, extract, format, translate
+type: function
+category: text
+
+parameters:
+  - name: text
+    type: string
+    description: The text to process
+    required: true
+  - name: operation
+    type: string
+    description: The operation to perform
+    required: true
+    enum: [summarize, extract_entities, extract_keywords, format, translate, sentiment, classify]
+  - name: options
+    type: object
+    description: Operation-specific options
+    required: false
+    default: {}
+
+config_schema:
+  type: object
+  properties:
+    llm_config_name:
+      type: string
+      description: LLM configuration to use for processing
+    max_output_length:
+      type: integer
+      description: Maximum output length
+      default: 1000
+    language:
+      type: string
+      description: Target language for translation
+      default: en
+    classification_labels:
+      type: array
+      description: Labels for classification
+      items:
+        type: string
+
+implementation:
+  type: python
+  handler: tools.text_processor.execute
+
+tags:
+  - generic
+  - text
+  - nlp
+  - processing
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

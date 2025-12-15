@@ -1,0 +1,41 @@
+# Example 02: Research Agent with Tools
+# A research agent that uses web search and text processing tools
+
+id: example-research-tools
+name: Research Agent with Tools
+description: Research agent that searches the web and processes information
+difficulty: beginner
+
+agent:
+  base: research-agent
+  config:
+    research_depth: standard
+    source_types:
+      - web
+    output_format: summary
+    include_citations: true
+    max_sources: 5
+
+tools:
+  - id: web-search
+    config:
+      num_results: 5
+  - id: text-processor
+    config:
+      max_output_length: 500
+
+# No graph - single agent with tools
+
+usage: |
+  This example demonstrates an agent using tools to gather information.
+  
+  The research agent:
+  1. Receives a research question
+  2. Uses web-search tool to find relevant sources
+  3. Uses text-processor to summarize findings
+  4. Returns a synthesized answer with citations
+
+example_prompts:
+  - "What are the latest developments in quantum computing?"
+  - "Compare renewable energy sources"
+  - "What is the current state of AI regulation?"

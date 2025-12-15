@@ -1,0 +1,54 @@
+id: task-executor-agent
+name: Task Executor Agent
+description: An agent designed for executing complex multi-step tasks using LangGraph
+type: task_executor
+status: active
+
+llm:
+  provider: nvidia
+  model: meta/llama-3.3-70b-instruct
+  endpoint: https://integrate.api.nvidia.com/v1
+  api_key_env: NVIDIA_API_KEY
+  temperature: 0.3
+  max_tokens: 4096
+  system_prompt: |
+    You are a task execution agent. Break down complex tasks into steps,
+    use available tools, and complete tasks systematically.
+    Always verify your work before providing final results.
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - code_execution
+
+tools:
+  - code-executor
+  - file-reader
+  - web-search
+
+mcp_servers:
+  - filesystem-mcp
+
+graph_id: task-execution-graph
+
+memory:
+  enabled: true
+  type: summary
+  max_tokens: 8000
+  persistence: true
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+  - power-users
+allowed_roles:
+  - task_executor
+
+tags:
+  - task-execution
+  - langgraph
+  - nvidia
+
+metadata:
+  version: "1.0"
+  max_steps: 10

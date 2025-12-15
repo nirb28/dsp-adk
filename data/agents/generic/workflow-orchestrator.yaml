@@ -1,0 +1,87 @@
+id: workflow-orchestrator
+name: Workflow Orchestrator Agent
+description: Coordinates complex multi-step workflows, delegating tasks to specialized agents
+type: orchestrator
+status: active
+category: orchestration
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key_env: ${LLM_API_KEY_ENV}
+  temperature: 0.3
+  max_tokens: 4096
+
+system_prompt: |
+  You are a workflow orchestrator responsible for:
+  1. Breaking down complex tasks into subtasks
+  2. Delegating subtasks to appropriate specialized agents
+  3. Coordinating the flow of information between agents
+  4. Aggregating results and handling errors
+  5. Ensuring overall task completion
+  
+  Plan carefully before execution. Monitor progress and adapt
+  the workflow as needed. Report on overall status clearly.
+
+config_schema:
+  type: object
+  properties:
+    available_agents:
+      type: array
+      items:
+        type: string
+      description: IDs of agents available for delegation
+    max_parallel_tasks:
+      type: integer
+      default: 3
+    retry_on_failure:
+      type: boolean
+      default: true
+    max_retries:
+      type: integer
+      default: 2
+    timeout_seconds:
+      type: integer
+      default: 300
+    reporting_interval:
+      type: string
+      enum: [per_step, on_completion, continuous]
+      default: per_step
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - streaming
+  - agent_delegation
+
+tools:
+  - http-request
+
+skills:
+  - task-decomposition
+  - workflow-planning
+  - error-handling
+  - progress-tracking
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 16000
+
+tags:
+  - generic
+  - orchestration
+  - workflow
+  - coordination
+  - multi-agent
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true
+  use_cases:
+    - Complex task automation
+    - Multi-step processes
+    - Agent coordination
+    - Pipeline execution

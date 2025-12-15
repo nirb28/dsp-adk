@@ -1,0 +1,48 @@
+id: example-conversational-agent
+name: Example Conversational Agent
+description: A sample conversational agent with tool calling capabilities
+type: conversational
+status: active
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  endpoint: https://api.groq.com/openai/v1
+  api_key_env: GROQ_API_KEY
+  temperature: 0.7
+  max_tokens: 2048
+  system_prompt: |
+    You are a helpful AI assistant. You can use tools to help answer questions.
+    Be concise and accurate in your responses.
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - streaming
+
+tools:
+  - web-search
+  - calculator
+
+mcp_servers: []
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 4000
+  persistence: false
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+  - developers
+allowed_roles: []
+
+tags:
+  - conversational
+  - example
+  - groq
+
+metadata:
+  version: "1.0"
+  author: system

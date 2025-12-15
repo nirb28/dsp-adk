@@ -1,0 +1,41 @@
+id: caching-adapter
+name: Caching Adapter
+description: Caches responses to reduce latency and LLM API costs
+type: caching
+position: wrap
+enabled: true
+priority: 25
+
+caching:
+  enabled: true
+  provider: memory
+  ttl_seconds: 300
+  max_size: 1000
+  key_prefix: adk_cache_
+  redis_url: ${REDIS_URL}
+  cache_by:
+    - query
+    - agent_id
+  skip_on_error: true
+
+apply_to_types:
+  - agent
+skip_types:
+  - tool
+  - condition
+  - router
+  - start
+  - end
+
+conditions:
+  cache_deterministic_only: true
+  min_response_length: 50
+
+tags:
+  - caching
+  - performance
+  - cost-optimization
+
+metadata:
+  version: "1.0"
+  cache_hit_header: X-Cache-Hit

@@ -1,0 +1,54 @@
+# Example 04: Data Analysis Workflow
+# Data analyst agent that queries databases and generates reports
+
+id: example-data-analysis
+name: Data Analysis Workflow
+description: Analyze data from databases and generate insights
+difficulty: intermediate
+
+agent:
+  base: data-analyst
+  config:
+    output_format: report
+    include_visualizations: true
+    statistical_tests:
+      - correlation
+      - regression
+    confidence_level: 0.95
+
+tools:
+  - id: database-query
+    config:
+      connections:
+        default:
+          type: postgresql
+          connection_string_env: DATABASE_URL
+      read_only: true
+      max_rows: 1000
+      timeout: 30
+  - id: data-transformer
+    config:
+      default_output_format: json
+  - id: file-operations
+    config:
+      base_path: ./reports
+
+skills:
+  - sql-generation
+  - statistical-analysis
+
+usage: |
+  This example shows data analysis with database queries.
+  
+  The workflow:
+  1. User describes what data analysis they need
+  2. Agent generates SQL query using sql-generation skill
+  3. Agent executes query using database-query tool
+  4. Agent transforms data using data-transformer
+  5. Agent analyzes data and generates insights
+  6. Agent saves report using file-operations
+
+example_prompts:
+  - "Analyze sales trends over the last quarter"
+  - "Find the top 10 customers by revenue"
+  - "Calculate the correlation between price and sales volume"

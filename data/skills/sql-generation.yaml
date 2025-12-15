@@ -1,0 +1,70 @@
+id: sql-generation
+name: SQL Query Generation
+description: Generate optimized SQL queries from natural language descriptions
+category: data_processing
+version: "1.0.0"
+
+system_prompt: |
+  When generating SQL queries:
+  1. Understand the data request and expected output
+  2. Write clear, efficient SQL using appropriate JOINs
+  3. Include proper WHERE clauses and filtering
+  4. Use appropriate aggregations and grouping
+  5. Optimize for performance (indexes, avoid SELECT *)
+  6. Add comments explaining complex logic
+  
+  Always validate the query logic and consider edge cases.
+
+parameters:
+  - name: dialect
+    type: string
+    description: SQL dialect
+    enum: [postgresql, mysql, sqlite, mssql, oracle, bigquery]
+    default: postgresql
+  - name: include_explanation
+    type: boolean
+    description: Explain the query logic
+    default: true
+  - name: optimize
+    type: boolean
+    description: Optimize for performance
+    default: true
+  - name: parameterize
+    type: boolean
+    description: Use parameterized queries
+    default: true
+
+examples:
+  - input: "Get top 10 customers by total order value last month"
+    output: |
+      SELECT 
+          c.customer_id,
+          c.name,
+          SUM(o.total) as total_value
+      FROM customers c
+      JOIN orders o ON c.customer_id = o.customer_id
+      WHERE o.order_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+        AND o.order_date < DATE_TRUNC('month', CURRENT_DATE)
+      GROUP BY c.customer_id, c.name
+      ORDER BY total_value DESC
+      LIMIT 10;
+
+required_tools:
+  - database-query
+
+tags:
+  - sql
+  - database
+  - query
+  - data
+
+use_cases:
+  - Data extraction
+  - Report queries
+  - Analytics
+  - Data exploration
+
+metadata:
+  author: system
+  rating: 4.8
+  usage_count: 0

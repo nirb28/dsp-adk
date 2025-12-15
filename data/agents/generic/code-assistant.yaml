@@ -1,0 +1,89 @@
+id: code-assistant
+name: Code Assistant Agent
+description: A multi-language code assistant that can write, review, debug, and explain code
+type: coding
+status: active
+category: development
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key_env: ${LLM_API_KEY_ENV}
+  temperature: 0.2
+  max_tokens: 8192
+
+system_prompt: |
+  You are an expert software developer assistant. You can:
+  1. Write clean, efficient, and well-documented code
+  2. Review code for bugs, security issues, and best practices
+  3. Debug and fix issues in existing code
+  4. Explain complex code and algorithms
+  5. Suggest optimizations and improvements
+  
+  Always follow coding best practices, include error handling,
+  and write tests when appropriate. Explain your reasoning.
+
+config_schema:
+  type: object
+  properties:
+    languages:
+      type: array
+      items:
+        type: string
+      default: [python, javascript, typescript]
+      description: Programming languages to support
+    style_guide:
+      type: string
+      description: Code style guide to follow (e.g., PEP8, Airbnb)
+    include_tests:
+      type: boolean
+      default: true
+    include_docs:
+      type: boolean
+      default: true
+    security_check:
+      type: boolean
+      default: true
+    framework:
+      type: string
+      description: Specific framework context (e.g., React, FastAPI, Django)
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - streaming
+  - code_execution
+
+tools:
+  - code-executor
+  - file-operations
+  - http-request
+
+skills:
+  - code-generation
+  - code-review
+  - debugging
+  - refactoring
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 16000
+
+tags:
+  - generic
+  - coding
+  - development
+  - programming
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true
+  use_cases:
+    - Code generation
+    - Code review
+    - Bug fixing
+    - Code explanation
+    - Refactoring

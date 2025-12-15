@@ -1,0 +1,139 @@
+id: simple-qa-graph
+name: Simple Q&A Graph
+description: A simple question-answering graph with tool augmentation
+type: langgraph
+
+nodes:
+  - id: start
+    name: Start
+    type: start
+    config: {}
+    
+  - id: classifier
+    name: Query Classifier
+    type: agent
+    agent_id: example-conversational-agent
+    config:
+      prompt_suffix: |
+        Classify this query into one of: factual, calculation, general.
+        Respond with only the classification.
+    
+  - id: tool-selector
+    name: Tool Selector
+    type: router
+    condition: select_tool_route
+    routes:
+      factual: search-node
+      calculation: calc-node
+      general: answer-node
+    
+  - id: search-node
+    name: Web Search
+    type: tool
+    tool_id: web-search
+    config: {}
+    
+  - id: calc-node
+    name: Calculator
+    type: tool
+    tool_id: calculator
+    config: {}
+    
+  - id: answer-node
+    name: Answer Generator
+    type: agent
+    agent_id: example-conversational-agent
+    config:
+      prompt_suffix: "Answer the user's question based on the context provided."
+    
+  - id: end
+    name: End
+    type: end
+    config: {}
+
+edges:
+  - id: e1
+    source: start
+    target: classifier
+    type: normal
+    
+  - id: e2
+    source: classifier
+    target: tool-selector
+    type: normal
+    
+  - id: e3
+    source: tool-selector
+    target: search-node
+    type: conditional
+    condition_value: factual
+    
+  - id: e4
+    source: tool-selector
+    target: calc-node
+    type: conditional
+    condition_value: calculation
+    
+  - id: e5
+    source: tool-selector
+    target: answer-node
+    type: conditional
+    condition_value: general
+    
+  - id: e6
+    source: search-node
+    target: answer-node
+    type: normal
+    
+  - id: e7
+    source: calc-node
+    target: answer-node
+    type: normal
+    
+  - id: e8
+    source: answer-node
+    target: end
+    type: normal
+
+entry_point: start
+
+state_schema:
+  fields:
+    query:
+      type: string
+      description: User's question
+    classification:
+      type: string
+      default: general
+    tool_result:
+      type: object
+      default: {}
+    answer:
+      type: string
+      default: ""
+
+checkpointer: memory
+checkpointer_config: {}
+
+max_iterations: 10
+timeout: 60
+streaming: true
+
+agents:
+  - example-conversational-agent
+tools:
+  - web-search
+  - calculator
+mcp_servers: []
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+
+tags:
+  - qa
+  - langgraph
+  - simple
+
+metadata:
+  version: "1.0"

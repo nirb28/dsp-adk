@@ -1,0 +1,54 @@
+id: observability-adapter
+name: Observability Adapter
+description: Provides comprehensive metrics, tracing, and logging for agent execution
+type: observability
+position: wrap
+enabled: true
+priority: 20
+
+observability:
+  metrics:
+    enabled: true
+    provider: prometheus
+    endpoint: ${PROMETHEUS_PUSHGATEWAY_URL}
+    prefix: adk_
+    labels:
+      environment: ${ENVIRONMENT}
+      service: adk
+    collect_latency: true
+    collect_tokens: true
+    collect_errors: true
+  tracing:
+    enabled: true
+    provider: opentelemetry
+    endpoint: ${OTEL_EXPORTER_ENDPOINT}
+    service_name: adk
+    sample_rate: 1.0
+    propagate_context: true
+  logging:
+    enabled: true
+    level: INFO
+    format: json
+    include_request: true
+    include_response: false
+    include_metadata: true
+    redact_fields:
+      - password
+      - secret
+      - token
+      - api_key
+
+apply_to_types: []
+skip_types:
+  - start
+  - end
+
+tags:
+  - observability
+  - metrics
+  - tracing
+  - logging
+
+metadata:
+  version: "1.0"
+  author: system

@@ -1,0 +1,77 @@
+id: conversational-assistant
+name: Conversational Assistant Agent
+description: A friendly, helpful conversational agent for general assistance and Q&A
+type: conversational
+status: active
+category: assistant
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key_env: ${LLM_API_KEY_ENV}
+  temperature: 0.7
+  max_tokens: 2048
+
+system_prompt: |
+  You are a helpful, friendly assistant. Your role is to:
+  1. Answer questions clearly and accurately
+  2. Help with various tasks and requests
+  3. Provide explanations and guidance
+  4. Maintain a conversational and approachable tone
+  
+  Be concise but thorough. Ask clarifying questions when needed.
+  Admit when you don't know something rather than guessing.
+
+config_schema:
+  type: object
+  properties:
+    personality:
+      type: string
+      enum: [professional, friendly, casual, formal]
+      default: friendly
+    verbosity:
+      type: string
+      enum: [concise, balanced, detailed]
+      default: balanced
+    language:
+      type: string
+      default: en
+    domain_context:
+      type: string
+      description: Specific domain knowledge to emphasize
+    enable_tools:
+      type: boolean
+      default: true
+
+capabilities:
+  - multi_turn
+  - streaming
+
+tools: []
+
+skills:
+  - conversation-management
+  - question-answering
+  - task-assistance
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 4000
+
+tags:
+  - generic
+  - conversational
+  - assistant
+  - qa
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true
+  use_cases:
+    - Customer support
+    - General Q&A
+    - Task assistance
+    - Information lookup

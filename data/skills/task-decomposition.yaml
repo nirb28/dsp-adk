@@ -1,0 +1,68 @@
+id: task-decomposition
+name: Task Decomposition
+description: Break down complex tasks into manageable subtasks with clear dependencies
+category: reasoning
+version: "1.0.0"
+
+system_prompt: |
+  When decomposing tasks:
+  1. Understand the overall goal and success criteria
+  2. Identify the main components or phases
+  3. Break each component into atomic, actionable subtasks
+  4. Identify dependencies between subtasks
+  5. Estimate effort and assign priorities
+  6. Create a logical execution order
+  
+  Output should be a clear, actionable task hierarchy with dependencies noted.
+
+parameters:
+  - name: max_depth
+    type: integer
+    description: Maximum nesting depth for subtasks
+    default: 3
+    min_value: 1
+    max_value: 5
+  - name: output_format
+    type: string
+    enum: [list, tree, graph, gantt]
+    default: tree
+  - name: include_estimates
+    type: boolean
+    description: Include time/effort estimates
+    default: true
+  - name: identify_blockers
+    type: boolean
+    description: Highlight potential blockers
+    default: true
+
+examples:
+  - input: "Plan a website redesign project"
+    output: |
+      1. Discovery Phase
+         1.1 Stakeholder interviews
+         1.2 Current site audit
+         1.3 Competitor analysis
+      2. Design Phase (depends on 1)
+         2.1 Wireframes
+         2.2 Visual design
+      ...
+
+required_capabilities:
+  - multi_turn
+
+tags:
+  - planning
+  - reasoning
+  - project-management
+  - decomposition
+
+use_cases:
+  - Project planning
+  - Sprint planning
+  - Complex problem solving
+  - Workflow design
+
+metadata:
+  author: system
+  rating: 4.6
+  usage_count: 0

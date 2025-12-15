@@ -1,0 +1,88 @@
+id: memory-mcp
+name: Memory MCP Server
+description: MCP server for knowledge graph memory operations
+
+protocol: stdio
+
+command: npx
+args:
+  - -y
+  - "@modelcontextprotocol/server-memory"
+env:
+  NODE_ENV: production
+cwd: null
+
+tools:
+  - name: create_entities
+    description: Create new entities in the knowledge graph
+    input_schema:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              entityType:
+                type: string
+              observations:
+                type: array
+                items:
+                  type: string
+      required:
+        - entities
+  - name: create_relations
+    description: Create relations between entities
+    input_schema:
+      type: object
+      properties:
+        relations:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+              relationType:
+                type: string
+      required:
+        - relations
+  - name: search_nodes
+    description: Search for nodes in the knowledge graph
+    input_schema:
+      type: object
+      properties:
+        query:
+          type: string
+      required:
+        - query
+  - name: read_graph
+    description: Read the entire knowledge graph
+    input_schema:
+      type: object
+      properties: {}
+
+resources: []
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+allowed_roles: []
+api_key_env: null
+
+timeout: 30
+auto_start: true
+health_check_interval: 60
+
+tags:
+  - memory
+  - mcp
+  - knowledge-graph
+
+metadata:
+  version: "1.0"
+  npm_package: "@modelcontextprotocol/server-memory"

@@ -1,0 +1,132 @@
+# Graph Definition: Customer Support Router
+# Conditional routing based on request classification
+
+id: support-router-graph
+name: Customer Support Router
+type: conditional
+description: Routes customer requests to specialized support agents
+
+nodes:
+  - id: classify
+    name: Request Classifier
+    type: agent
+    agent_id: conversational-assistant
+    description: Classifies incoming support requests
+    config:
+      personality: professional
+      verbosity: concise
+    system_prompt_override: |
+      You are a support request classifier. Analyze the user's message
+      and classify it into exactly one of these categories:
+      - technical: coding, errors, bugs, API issues, integration problems
+      - research: questions needing investigation, comparisons, analysis
+      - general: account issues, policies, general inquiries
+      
+      Respond with ONLY the category name (technical, research, or general).
+    output_mapping:
+      category: "$.response"
+      
+  - id: technical-support
+    name: Technical Support Agent
+    type: agent
+    agent_id: code-assistant
+    description: Handles technical and coding issues
+    config:
+      languages:
+        - python
+        - javascript
+      include_docs: true
+      security_check: true
+    tools:
+      - file-operations
+    input_mapping:
+      query: "$.original_request"
+    output_mapping:
+      response: "$.response"
+      
+  - id: research-support
+    name: Research Support Agent
+    type: agent
+    agent_id: research-agent
+    description: Handles research and investigation requests
+    config:
+      research_depth: standard
+      include_citations: true
+    tools:
+      - web-search
+      - text-processor
+    input_mapping:
+      query: "$.original_request"
+    output_mapping:
+      response: "$.response"
+      
+  - id: general-support
+    name: General Support Agent
+    type: agent
+    agent_id: conversational-assistant
+    description: Handles general support inquiries
+    config:
+      personality: friendly
+      verbosity: balanced
+    input_mapping:
+      query: "$.original_request"
+    output_mapping:
+      response: "$.response"
+
+edges:
+  - source: START
+    target: classify
+    
+  - source: classify
+    target: technical-support
+    condition:
+      type: expression
+      expression: "state.category.strip().lower() == 'technical'"
+      
+  - source: classify
+    target: research-support
+    condition:
+      type: expression
+      expression: "state.category.strip().lower() == 'research'"
+      
+  - source: classify
+    target: general-support
+    condition:
+      type: default
+      
+  - source: technical-support
+    target: END
+    
+  - source: research-support
+    target: END
+    
+  - source: general-support
+    target: END
+
+state_schema:
+  type: object
+  properties:
+    original_request:
+      type: string
+      description: The original user request
+    category:
+      type: string
+      description: Classified category of the request
+      enum:
+        - technical
+        - research
+        - general
+    response:
+      type: string
+      description: Final response from the appropriate agent
+  required:
+    - original_request
+
+metadata:
+  version: "1.0.0"
+  author: system
+  tags:
+    - conditional
+    - routing
+    - support
+    - classification

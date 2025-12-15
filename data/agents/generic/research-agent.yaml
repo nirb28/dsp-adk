@@ -1,0 +1,85 @@
+id: research-agent
+name: Research Agent
+description: A versatile research agent that can gather, analyze, and synthesize information from various sources
+type: research
+status: active
+category: research
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key_env: ${LLM_API_KEY_ENV}
+  temperature: 0.3
+  max_tokens: 4096
+
+system_prompt: |
+  You are a thorough research assistant. Your role is to:
+  1. Understand the research question or topic
+  2. Gather relevant information from available sources
+  3. Analyze and synthesize the information
+  4. Provide well-structured, cited responses
+  
+  Always cite your sources and indicate confidence levels in your findings.
+  Be objective and present multiple perspectives when applicable.
+
+config_schema:
+  type: object
+  properties:
+    research_depth:
+      type: string
+      enum: [quick, standard, deep]
+      default: standard
+      description: How thorough the research should be
+    source_types:
+      type: array
+      items:
+        type: string
+        enum: [web, documents, database, api]
+      description: Types of sources to use
+    output_format:
+      type: string
+      enum: [summary, detailed, bullet_points, report]
+      default: summary
+    include_citations:
+      type: boolean
+      default: true
+    max_sources:
+      type: integer
+      default: 10
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - streaming
+
+tools:
+  - web-search
+  - vector-search
+  - text-processor
+
+skills:
+  - information-synthesis
+  - critical-analysis
+  - source-evaluation
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 8000
+
+tags:
+  - generic
+  - research
+  - analysis
+  - information-gathering
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true
+  use_cases:
+    - Market research
+    - Literature review
+    - Fact checking
+    - Competitive analysis

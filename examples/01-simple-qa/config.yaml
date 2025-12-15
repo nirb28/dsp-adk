@@ -1,0 +1,32 @@
+# Example 01: Simple Q&A Agent
+# A basic conversational agent that answers questions without tools
+
+id: example-simple-qa
+name: Simple Q&A Example
+description: Basic conversational agent for answering questions
+difficulty: beginner
+
+agent:
+  base: conversational-assistant
+  config:
+    personality: friendly
+    verbosity: balanced
+    language: en
+
+# No tools required for basic Q&A
+
+# No graph needed - direct agent interaction
+
+usage: |
+  This example demonstrates the simplest use case: a conversational agent
+  that answers questions using only its built-in knowledge.
+  
+  To use:
+  1. Load the conversational-assistant agent
+  2. Send messages directly to the agent
+  3. Agent responds based on its LLM knowledge
+
+example_prompts:
+  - "What is the capital of France?"
+  - "Explain quantum computing in simple terms"
+  - "What are the benefits of exercise?"

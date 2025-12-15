@@ -1,0 +1,67 @@
+id: database-query
+name: Database Query Tool
+description: Execute SQL queries against configured databases with parameterized queries
+type: function
+category: database
+
+parameters:
+  - name: query
+    type: string
+    description: SQL query to execute
+    required: true
+  - name: parameters
+    type: array
+    description: Query parameters for parameterized queries
+    required: false
+    default: []
+  - name: database
+    type: string
+    description: Database connection name
+    required: false
+    default: default
+  - name: limit
+    type: integer
+    description: Maximum rows to return
+    required: false
+    default: 100
+
+config_schema:
+  type: object
+  properties:
+    connections:
+      type: object
+      description: Named database connections
+      additionalProperties:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [postgresql, mysql, sqlite, mssql]
+          connection_string_env:
+            type: string
+            description: Environment variable with connection string
+    read_only:
+      type: boolean
+      description: Only allow SELECT queries
+      default: true
+    max_rows:
+      type: integer
+      default: 1000
+    timeout:
+      type: integer
+      default: 30
+
+implementation:
+  type: python
+  handler: tools.database_query.execute
+
+tags:
+  - generic
+  - database
+  - sql
+  - query
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

@@ -1,0 +1,63 @@
+id: file-operations
+name: File Operations Tool
+description: Read, write, list, and manage files with configurable paths and permissions
+type: function
+category: filesystem
+
+parameters:
+  - name: operation
+    type: string
+    description: File operation to perform
+    required: true
+    enum: [read, write, append, list, delete, copy, move, exists, info]
+  - name: path
+    type: string
+    description: File or directory path
+    required: true
+  - name: content
+    type: string
+    description: Content to write (for write/append operations)
+    required: false
+  - name: destination
+    type: string
+    description: Destination path (for copy/move operations)
+    required: false
+  - name: encoding
+    type: string
+    description: File encoding
+    required: false
+    default: utf-8
+
+config_schema:
+  type: object
+  properties:
+    base_path:
+      type: string
+      description: Base path to restrict operations to
+    allowed_extensions:
+      type: array
+      items:
+        type: string
+      description: Allowed file extensions
+    max_file_size:
+      type: integer
+      description: Maximum file size in bytes
+      default: 10485760
+    create_directories:
+      type: boolean
+      default: true
+
+implementation:
+  type: python
+  handler: tools.file_operations.execute
+
+tags:
+  - generic
+  - file
+  - filesystem
+  - io
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

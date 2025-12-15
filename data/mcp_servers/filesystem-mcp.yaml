@@ -1,0 +1,76 @@
+id: filesystem-mcp
+name: Filesystem MCP Server
+description: MCP server for file system operations
+
+protocol: stdio
+
+command: npx
+args:
+  - -y
+  - "@modelcontextprotocol/server-filesystem"
+  - "/workspace"
+env:
+  NODE_ENV: production
+cwd: null
+
+tools:
+  - name: read_file
+    description: Read contents of a file
+    input_schema:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Path to the file to read
+      required:
+        - path
+  - name: write_file
+    description: Write contents to a file
+    input_schema:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Path to the file to write
+        content:
+          type: string
+          description: Content to write
+      required:
+        - path
+        - content
+  - name: list_directory
+    description: List contents of a directory
+    input_schema:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Path to the directory
+      required:
+        - path
+
+resources:
+  - uri: file:///workspace
+    name: Workspace
+    description: Root workspace directory
+    mime_type: inode/directory
+
+jwt_required: true
+allowed_groups:
+  - ai-team
+  - developers
+allowed_roles: []
+api_key_env: null
+
+timeout: 60
+auto_start: false
+health_check_interval: 30
+
+tags:
+  - filesystem
+  - mcp
+  - storage
+
+metadata:
+  version: "1.0"
+  npm_package: "@modelcontextprotocol/server-filesystem"

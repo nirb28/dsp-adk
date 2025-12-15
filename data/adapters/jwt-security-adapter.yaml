@@ -1,0 +1,47 @@
+id: jwt-security-adapter
+name: JWT Security Adapter
+description: Validates JWT tokens and enforces access control using the DSP JWT service
+type: security
+position: pre
+enabled: true
+priority: 10
+
+security:
+  jwt:
+    enabled: true
+    jwt_service_url: ${JWT_SERVICE_URL}
+    secret_key_env: JWT_SECRET_KEY
+    algorithm: HS256
+    required_claims:
+      - sub
+      - exp
+    required_groups: []
+    required_roles: []
+    extract_metadata_filter: true
+  api_key:
+    enabled: false
+  input_sanitization: true
+  output_filtering: false
+  sensitive_fields:
+    - password
+    - secret
+    - token
+    - api_key
+    - credit_card
+  audit_logging: true
+
+apply_to_types:
+  - agent
+  - tool
+skip_types:
+  - start
+  - end
+
+tags:
+  - security
+  - jwt
+  - authentication
+
+metadata:
+  version: "1.0"
+  author: system

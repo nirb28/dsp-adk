@@ -1,0 +1,60 @@
+id: data-transformer
+name: Data Transformer Tool
+description: Transform data between formats (JSON, CSV, XML, YAML) and apply mappings
+type: function
+category: data
+
+parameters:
+  - name: data
+    type: string
+    description: Input data as string
+    required: true
+  - name: input_format
+    type: string
+    description: Input data format
+    required: true
+    enum: [json, csv, xml, yaml, text]
+  - name: output_format
+    type: string
+    description: Output data format
+    required: true
+    enum: [json, csv, xml, yaml, text, markdown_table]
+  - name: mapping
+    type: object
+    description: Field mapping rules
+    required: false
+  - name: filter
+    type: object
+    description: Filter conditions
+    required: false
+
+config_schema:
+  type: object
+  properties:
+    default_input_format:
+      type: string
+      default: json
+    default_output_format:
+      type: string
+      default: json
+    preserve_nulls:
+      type: boolean
+      default: false
+    flatten_nested:
+      type: boolean
+      default: false
+
+implementation:
+  type: python
+  handler: tools.data_transformer.execute
+
+tags:
+  - generic
+  - data
+  - transform
+  - etl
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

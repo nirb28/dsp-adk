@@ -1,0 +1,73 @@
+# Example 06: Conditional Graph with Branching
+# A graph with conditional routing based on classification
+
+id: example-conditional-graph
+name: Conditional Graph with Branching
+description: Route requests to different agents based on classification
+difficulty: advanced
+
+graph:
+  id: support-router-graph
+  name: Customer Support Router
+  type: conditional
+  description: Routes support requests to specialized agents
+  
+  nodes:
+    - id: classify
+      type: agent
+      agent_id: conversational-assistant
+      description: Classifies the type of support request
+      
+    - id: technical-support
+      type: agent
+      agent_id: code-assistant
+      description: Handles technical/coding issues
+      
+    - id: general-support
+      type: agent
+      agent_id: conversational-assistant
+      description: Handles general inquiries
+      
+    - id: research-support
+      type: agent
+      agent_id: research-agent
+      description: Handles research questions
+      
+  edges:
+    - source: START
+      target: classify
+      
+    - source: classify
+      target: technical-support
+      condition: "state.category == 'technical'"
+      
+    - source: classify
+      target: research-support
+      condition: "state.category == 'research'"
+      
+    - source: classify
+      target: general-support
+      condition: "default"
+      
+    - source: technical-support
+      target: END
+      
+    - source: research-support
+      target: END
+      
+    - source: general-support
+      target: END
+
+usage: |
+  This example shows conditional routing in graphs.
+  
+  The flow:
+  1. User sends a support request
+  2. Classifier determines the category
+  3. Request is routed to appropriate agent
+  4. Specialized agent handles the request
+
+example_prompts:
+  - "How do I fix this Python error?"
+  - "What are the best practices for API design?"
+  - "Tell me about your return policy"

@@ -1,0 +1,56 @@
+id: information-synthesis
+name: Information Synthesis
+description: Ability to combine information from multiple sources into coherent, structured output
+category: reasoning
+version: "1.0.0"
+
+system_prompt: |
+  When synthesizing information:
+  1. Identify key themes and patterns across sources
+  2. Reconcile conflicting information by noting discrepancies
+  3. Organize findings into a logical structure
+  4. Highlight the most important and actionable insights
+  5. Maintain source attribution throughout
+  
+  Output should be coherent, well-organized, and cite sources where applicable.
+
+parameters:
+  - name: output_structure
+    type: string
+    description: How to structure the synthesis
+    enum: [narrative, bullet_points, hierarchical, timeline]
+    default: hierarchical
+  - name: detail_level
+    type: string
+    enum: [brief, moderate, comprehensive]
+    default: moderate
+  - name: include_sources
+    type: boolean
+    default: true
+  - name: highlight_conflicts
+    type: boolean
+    default: true
+
+examples:
+  - input: "Synthesize the following market reports..."
+    output: "Based on analysis of 5 market reports, the key findings are..."
+
+required_capabilities:
+  - multi_turn
+
+tags:
+  - reasoning
+  - synthesis
+  - analysis
+  - research
+
+use_cases:
+  - Literature reviews
+  - Market research summaries
+  - Multi-source analysis
+  - Report generation
+
+metadata:
+  author: system
+  rating: 4.5
+  usage_count: 0

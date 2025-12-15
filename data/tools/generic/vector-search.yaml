@@ -1,0 +1,62 @@
+id: vector-search
+name: Vector Search Tool
+description: Search vector databases for semantic similarity with configurable embeddings
+type: function
+category: search
+
+parameters:
+  - name: query
+    type: string
+    description: Search query text
+    required: true
+  - name: collection
+    type: string
+    description: Vector collection/index name
+    required: true
+  - name: top_k
+    type: integer
+    description: Number of results to return
+    required: false
+    default: 5
+  - name: filter
+    type: object
+    description: Metadata filter
+    required: false
+  - name: threshold
+    type: number
+    description: Minimum similarity threshold
+    required: false
+    default: 0.7
+
+config_schema:
+  type: object
+  properties:
+    vector_store:
+      type: string
+      enum: [faiss, elasticsearch, redis, pinecone, qdrant, weaviate]
+      default: faiss
+    embedding_model:
+      type: string
+      description: Embedding model to use
+    embedding_endpoint:
+      type: string
+      description: Embedding API endpoint
+    connection_config:
+      type: object
+      description: Vector store connection configuration
+
+implementation:
+  type: python
+  handler: tools.vector_search.execute
+
+tags:
+  - generic
+  - search
+  - vector
+  - semantic
+  - rag
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true

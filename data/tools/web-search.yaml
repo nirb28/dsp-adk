@@ -1,0 +1,56 @@
+id: web-search
+name: Web Search Tool
+description: Search the web for information using a search API
+type: api
+
+parameters:
+  - name: query
+    type: string
+    description: The search query
+    required: true
+  - name: num_results
+    type: integer
+    description: Number of results to return (1-10)
+    required: false
+    default: 5
+
+returns:
+  type: object
+  properties:
+    results:
+      type: array
+      items:
+        type: object
+        properties:
+          title:
+            type: string
+          url:
+            type: string
+          snippet:
+            type: string
+
+implementation:
+  endpoint: ${SEARCH_API_ENDPOINT}
+  method: GET
+  headers:
+    Authorization: Bearer ${SEARCH_API_KEY}
+  query_params:
+    q: "{{query}}"
+    count: "{{num_results}}"
+
+jwt_required: true
+allowed_groups: []
+allowed_roles: []
+rate_limit: 30
+
+timeout: 15
+retry_count: 2
+
+tags:
+  - search
+  - web
+  - api
+
+metadata:
+  provider: custom
+  version: "1.0"

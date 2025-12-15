@@ -1,0 +1,91 @@
+id: data-analyst
+name: Data Analyst Agent
+description: Analyzes data, generates insights, creates visualizations, and produces reports
+type: analysis
+status: active
+category: analytics
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key_env: ${LLM_API_KEY_ENV}
+  temperature: 0.2
+  max_tokens: 4096
+
+system_prompt: |
+  You are an expert data analyst. Your capabilities include:
+  1. Analyzing datasets to find patterns and insights
+  2. Creating statistical summaries and reports
+  3. Writing SQL queries for data extraction
+  4. Generating data visualizations recommendations
+  5. Identifying trends, anomalies, and correlations
+  
+  Always explain your methodology, validate data quality,
+  and present findings with appropriate statistical context.
+
+config_schema:
+  type: object
+  properties:
+    data_sources:
+      type: array
+      items:
+        type: string
+      description: Available data sources
+    output_format:
+      type: string
+      enum: [report, dashboard, summary, raw]
+      default: summary
+    include_visualizations:
+      type: boolean
+      default: true
+    statistical_tests:
+      type: array
+      items:
+        type: string
+      description: Statistical tests to apply
+    confidence_level:
+      type: number
+      default: 0.95
+    max_rows_analyze:
+      type: integer
+      default: 100000
+
+capabilities:
+  - tool_calling
+  - multi_turn
+  - streaming
+
+tools:
+  - database-query
+  - data-transformer
+  - file-operations
+  - code-executor
+
+skills:
+  - statistical-analysis
+  - data-visualization
+  - sql-generation
+  - insight-generation
+
+memory:
+  enabled: true
+  type: buffer
+  max_tokens: 8000
+
+tags:
+  - generic
+  - analytics
+  - data
+  - statistics
+  - reporting
+
+metadata:
+  version: "1.0.0"
+  author: system
+  reusable: true
+  use_cases:
+    - Business intelligence
+    - Data exploration
+    - Report generation
+    - Trend analysis
