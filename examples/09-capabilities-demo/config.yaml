@@ -1,0 +1,97 @@
+# Example 09: Capabilities Demo
+# Demonstrates the modular capability system
+
+name: capabilities-demo
+description: Showcases ADK capabilities including sessions, memory, streaming, guardrails, and more
+
+# Agent configuration
+agent:
+  id: demo-agent
+  name: Capabilities Demo Agent
+  model: gpt-3.5-turbo
+  system_prompt: |
+    You are a helpful assistant demonstrating ADK capabilities.
+    You have access to session memory, streaming, and guardrails.
+
+# Capabilities configuration
+capabilities:
+  # Session Management
+  sessions:
+    enabled: true
+    config:
+      default_ttl_minutes: 60
+      max_messages: 100
+      cleanup_interval: 300
+
+  # Memory Management  
+  memory:
+    enabled: true
+    config:
+      default_scope: session
+      max_memories: 1000
+      enable_semantic: false
+
+  # Streaming Support
+  streaming:
+    enabled: true
+    config:
+      chunk_size: 100
+      format: sse
+
+  # Guardrails
+  guardrails:
+    enabled: true
+    config:
+      pii_detection: true
+      content_filtering: true
+      max_input_length: 10000
+      max_output_length: 50000
+      blocked_patterns:
+        - "password"
+        - "secret key"
+
+  # Cost Tracking
+  cost_tracking:
+    enabled: true
+    config:
+      retention_days: 30
+
+  # Rate Limiting
+  rate_limiting:
+    enabled: true
+    config:
+      default_requests_per_minute: 60
+      default_tokens_per_minute: 100000
+
+  # Model Router
+  model_router:
+    enabled: true
+    config:
+      default_strategy: task_based
+      fallback_enabled: true
+      endpoints:
+        - id: gpt4
+          name: GPT-4
+          provider: openai
+          model: gpt-4
+          tier: premium
+        - id: gpt35
+          name: GPT-3.5 Turbo
+          provider: openai
+          model: gpt-3.5-turbo
+          tier: economy
+
+# Tools
+tools:
+  - id: get_weather
+    name: Get Weather
+    type: function
+    description: Get current weather for a location
+    parameters:
+      type: object
+      properties:
+        location:
+          type: string
+          description: City name
+      required:
+        - location

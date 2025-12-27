@@ -4,13 +4,15 @@ Agent management API endpoints.
 import logging
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 
 from ..models.agents import (
     AgentConfig, AgentResponse, AgentListResponse,
-    AgentStatus, AgentType
+    AgentStatus, AgentType, AgentRunRequest, AgentRunResponse
 )
 from ..models.auth import AuthenticatedUser
 from ..services.agent_service import get_agent_service, AgentService
+from ..services.agent_executor import get_agent_executor, AgentExecutor, AgentExecutionError
 from .dependencies import get_current_user, get_optional_user, require_admin
 
 logger = logging.getLogger(__name__)
@@ -239,3 +241,134 @@ async def remove_mcp_server_from_agent(
         return response
     
     return AgentResponse(success=True, message="MCP server not assigned", agent=agent)
+
+
+@router.post("/{agent_id}/run", response_model=AgentRunResponse, summary="Run agent")
+async def run_agent(
+    agent_id: str,
+    request: AgentRunRequest,
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
+    service: AgentService = Depends(get_service)
+):
+    """
+    Execute an agent with a message and get a response.
+    Supports optional context and conversation history.
+    """
+    # Get agent
+    agent = service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent '{agent_id}' not found"
+        )
+    
+    # Check access
+    if agent.jwt_required and user:
+        has_access, error = service.check_user_access(agent, user)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=error
+            )
+    elif agent.jwt_required and not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required for this agent"
+        )
+    
+    # Execute agent
+    executor = get_agent_executor()
+    try:
+        kwargs = {}
+        if request.temperature is not None:
+            kwargs["temperature"] = request.temperature
+        if request.max_tokens is not None:
+            kwargs["max_tokens"] = request.max_tokens
+        
+        result = await executor.run(
+            agent=agent,
+            message=request.message,
+            context=request.context,
+            history=request.history,
+            user=user,
+            **kwargs
+        )
+        
+        return AgentRunResponse(**result)
+        
+    except AgentExecutionError as e:
+        logger.error(f"Agent execution error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.post("/{agent_id}/stream", summary="Stream agent response")
+async def stream_agent(
+    agent_id: str,
+    request: AgentRunRequest,
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
+    service: AgentService = Depends(get_service)
+):
+    """
+    Execute an agent with streaming response.
+    Returns Server-Sent Events (SSE) stream.
+    """
+    # Get agent
+    agent = service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent '{agent_id}' not found"
+        )
+    
+    # Check access
+    if agent.jwt_required and user:
+        has_access, error = service.check_user_access(agent, user)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=error
+            )
+    elif agent.jwt_required and not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required for this agent"
+        )
+    
+    # Stream agent response
+    executor = get_agent_executor()
+    
+    async def generate():
+        try:
+            kwargs = {}
+            if request.temperature is not None:
+                kwargs["temperature"] = request.temperature
+            if request.max_tokens is not None:
+                kwargs["max_tokens"] = request.max_tokens
+            
+            async for chunk in executor.stream(
+                agent=agent,
+                message=request.message,
+                context=request.context,
+                history=request.history,
+                user=user,
+                **kwargs
+            ):
+                yield f"data: {chunk}\n\n"
+            
+            yield "data: [DONE]\n\n"
+            
+        except AgentExecutionError as e:
+            logger.error(f"Agent streaming error: {e}")
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )

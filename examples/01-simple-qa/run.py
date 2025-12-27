@@ -24,11 +24,22 @@ async def main():
         print("\n1. Checking for conversational-assistant agent...")
         response = await client.get("/agents/conversational-assistant")
         if response.status_code == 200:
-            agent = response.json()
-            print(f"   Found agent: {agent['name']}")
-            print(f"   Description: {agent['description']}")
+            payload = response.json()
+            # API returns an AgentResponse wrapper: {success, message, agent}
+            agent = payload.get("agent") if isinstance(payload, dict) else None
+            if not agent:
+                print("   Unexpected response shape from ADK API")
+                print(f"   Response JSON: {payload}")
+                return
+            print(f"   Found agent: {agent.get('name', 'N/A')}")
+            print(f"   Description: {agent.get('description', 'N/A')}")
         else:
-            print("   Agent not found. Please ensure generic agents are loaded.")
+            print(f"   Request failed: {response.status_code}")
+            try:
+                print(f"   Response JSON: {response.json()}")
+            except Exception:
+                print(f"   Response text: {response.text}")
+            print("   Agent not found (or not accessible). Please ensure generic agents are loaded.")
             return
         
         # 2. Get agent configuration
@@ -46,22 +57,38 @@ async def main():
                 if 'default' in details:
                     print(f"     Default: {details['default']}")
         
-        # 4. Example usage
-        print("\n4. Example Usage:")
-        print("   In a real application, you would:")
-        print("   - Initialize the agent with your LLM configuration")
-        print("   - Send user messages to the agent")
-        print("   - Receive responses from the agent")
+        # 4. Run the agent with a sample question
+        print("\n4. Running the Agent:")
+        sample_question = "What is the capital of France?"
+        print(f"   Question: {sample_question}")
         
-        example_prompts = [
-            "What is the capital of France?",
-            "Explain quantum computing in simple terms",
-            "What are the benefits of exercise?"
-        ]
+        run_request = {
+            "message": sample_question
+        }
         
-        print("\n   Example prompts you could send:")
-        for i, prompt in enumerate(example_prompts, 1):
-            print(f"   {i}. \"{prompt}\"")
+        response = await client.post(
+            f"/agents/conversational-assistant/run",
+            json=run_request
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"\n   Agent Response:")
+            print(f"   {result.get('response', 'No response')}")
+            print(f"\n   Metadata:")
+            print(f"   - Model: {result.get('model', 'N/A')}")
+            print(f"   - Provider: {result.get('provider', 'N/A')}")
+            print(f"   - Duration: {result.get('duration_seconds', 0):.2f}s")
+            if 'usage' in result:
+                usage = result['usage']
+                print(f"   - Tokens: {usage.get('total_tokens', 'N/A')}")
+        else:
+            print(f"   Failed to run agent: {response.status_code}")
+            try:
+                error = response.json()
+                print(f"   Error: {error.get('detail', response.text)}")
+            except:
+                print(f"   Error: {response.text}")
         
         print("\n" + "=" * 60)
         print("Example complete!")

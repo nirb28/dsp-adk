@@ -1,6 +1,20 @@
 """
 Data models for the ADK platform.
 """
+# Import base classes from core
+from ..core.base import (
+    ADKComponentConfig,
+    ADKComponent,
+    ComponentType,
+    ComponentStatus,
+    LifecycleMixin,
+    ValidationMixin,
+    SecurityMixin,
+    ObservabilityMixin,
+    ComponentRegistry,
+    get_component_registry,
+)
+
 from .agents import (
     AgentConfig,
     AgentType,
@@ -46,6 +60,14 @@ from .adapters import (
     RateLimitingAdapterConfig,
     RetryAdapterConfig,
 )
+from .skills import (
+    SkillConfig,
+    SkillCategory,
+    SkillParameter,
+    SkillInstance,
+    SkillResponse,
+    SkillListResponse,
+)
 from .auth import (
     JWTClaims,
     TokenValidationRequest,
@@ -64,6 +86,17 @@ from .telemetry import (
 )
 
 __all__ = [
+    # Core Base Classes
+    "ADKComponentConfig",
+    "ADKComponent",
+    "ComponentType",
+    "ComponentStatus",
+    "LifecycleMixin",
+    "ValidationMixin",
+    "SecurityMixin",
+    "ObservabilityMixin",
+    "ComponentRegistry",
+    "get_component_registry",
     # Agents
     "AgentConfig",
     "AgentType",
@@ -104,6 +137,13 @@ __all__ = [
     "CachingAdapterConfig",
     "RateLimitingAdapterConfig",
     "RetryAdapterConfig",
+    # Skills
+    "SkillConfig",
+    "SkillCategory",
+    "SkillParameter",
+    "SkillInstance",
+    "SkillResponse",
+    "SkillListResponse",
     # Auth
     "JWTClaims",
     "TokenValidationRequest",

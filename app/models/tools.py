@@ -6,6 +6,8 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+from ..core.base import ADKComponentConfig, ComponentType
+
 
 class ToolType(str, Enum):
     """Types of tools supported."""
@@ -30,12 +32,22 @@ class ToolParameter(BaseModel):
         extra = "allow"
 
 
-class ToolConfig(BaseModel):
-    """Complete tool configuration."""
-    id: str = Field(..., description="Unique tool identifier")
-    name: str = Field(..., description="Human-readable tool name")
-    description: str = Field(..., description="Tool description for LLM")
-    type: ToolType = Field(default=ToolType.FUNCTION, description="Tool type")
+class ToolConfig(ADKComponentConfig):
+    """
+    Complete tool configuration.
+    
+    Inherits standard fields from ADKComponentConfig:
+    - id, name, description, version
+    - component_type, status, enabled
+    - tags, category, metadata
+    - jwt_required, allowed_groups, allowed_roles
+    - dependencies, created_at, updated_at, created_by
+    """
+    # Override component type
+    component_type: ComponentType = Field(default=ComponentType.TOOL)
+    
+    # Tool-specific type
+    tool_type: ToolType = Field(default=ToolType.FUNCTION, description="Tool type")
     
     # Function Schema (OpenAI-compatible)
     parameters: List[ToolParameter] = Field(default_factory=list, description="Tool parameters")
@@ -48,25 +60,10 @@ class ToolConfig(BaseModel):
     # For Shell tools: command, args
     # For MCP tools: mcp_server_id, tool_name
     
-    # Security
-    jwt_required: bool = Field(default=True, description="Whether JWT is required")
-    allowed_groups: List[str] = Field(default_factory=list, description="JWT groups allowed")
-    allowed_roles: List[str] = Field(default_factory=list, description="JWT roles allowed")
+    # Tool-specific settings
     rate_limit: Optional[int] = Field(default=None, description="Rate limit per minute")
-    
-    # Configuration
     timeout: int = Field(default=30, description="Timeout in seconds")
     retry_count: int = Field(default=0, description="Number of retries on failure")
-    
-    # Metadata
-    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    created_at: Optional[datetime] = Field(default=None)
-    updated_at: Optional[datetime] = Field(default=None)
-    created_by: Optional[str] = Field(default=None)
-    
-    class Config:
-        extra = "allow"
 
 
 class ToolResponse(BaseModel):

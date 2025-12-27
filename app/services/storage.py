@@ -5,6 +5,7 @@ import os
 import json
 import yaml
 import logging
+import re
 from typing import Optional, List, Dict, Any, TypeVar, Generic, Type
 from pathlib import Path
 from datetime import datetime
@@ -15,6 +16,34 @@ from ..config import get_settings
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T', bound=BaseModel)
+
+
+def resolve_env_variables(data: Any) -> Any:
+    """
+    Recursively resolve environment variables in data structures.
+    Supports ${VAR_NAME} syntax.
+    """
+    if isinstance(data, dict):
+        return {k: resolve_env_variables(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [resolve_env_variables(item) for item in data]
+    elif isinstance(data, str):
+        # Match ${VAR_NAME} pattern
+        pattern = r'\$\{([^}]+)\}'
+        matches = re.findall(pattern, data)
+        
+        if matches:
+            result = data
+            for var_name in matches:
+                env_value = os.getenv(var_name, '')
+                if env_value:
+                    result = result.replace(f'${{{var_name}}}', env_value)
+                else:
+                    logger.warning(f"Environment variable '{var_name}' not set, leaving placeholder")
+            return result
+        return data
+    else:
+        return data
 
 
 class StorageService(Generic[T]):
@@ -33,6 +62,19 @@ class StorageService(Generic[T]):
     def _get_file_path(self, item_id: str) -> Path:
         """Get the file path for an item."""
         return self.directory / f"{item_id}.{self.file_extension}"
+    
+    def _find_file(self, item_id: str) -> Optional[Path]:
+        """Find a file by ID, searching subdirectories recursively."""
+        # First check the root directory
+        direct_path = self._get_file_path(item_id)
+        if direct_path.exists():
+            return direct_path
+        
+        # Search subdirectories recursively
+        for file_path in self.directory.rglob(f"{item_id}.{self.file_extension}"):
+            return file_path
+        
+        return None
     
     def _serialize(self, item: T) -> str:
         """Serialize item to string."""
@@ -70,16 +112,18 @@ class StorageService(Generic[T]):
             return False
     
     def load(self, item_id: str) -> Optional[T]:
-        """Load an item from storage."""
+        """Load an item from storage (searches subdirectories)."""
         try:
-            file_path = self._get_file_path(item_id)
-            if not file_path.exists():
+            file_path = self._find_file(item_id)
+            if not file_path:
                 return None
             
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             data = self._deserialize(content)
+            # Resolve environment variables
+            data = resolve_env_variables(data)
             return self.model_class(**data)
             
         except Exception as e:
@@ -101,31 +145,50 @@ class StorageService(Generic[T]):
             return False
     
     def exists(self, item_id: str) -> bool:
-        """Check if an item exists."""
-        return self._get_file_path(item_id).exists()
+        """Check if an item exists (searches subdirectories)."""
+        return self._find_file(item_id) is not None
     
     def list_all(self) -> List[T]:
-        """List all items in storage."""
+        """List all items in storage (including subdirectories)."""
         items = []
+        seen_ids = set()
         try:
-            for file_path in self.directory.glob(f"*.{self.file_extension}"):
+            # Use rglob to search recursively
+            for file_path in self.directory.rglob(f"*.{self.file_extension}"):
                 item_id = file_path.stem
-                item = self.load(item_id)
+                # Avoid duplicates if same ID exists in multiple places
+                if item_id in seen_ids:
+                    continue
+                seen_ids.add(item_id)
+                item = self._load_from_path(file_path)
                 if item:
                     items.append(item)
         except Exception as e:
             logger.error(f"Error listing items: {e}")
         return items
     
-    def list_ids(self) -> List[str]:
-        """List all item IDs in storage."""
-        ids = []
+    def _load_from_path(self, file_path: Path) -> Optional[T]:
+        """Load an item from a specific file path."""
         try:
-            for file_path in self.directory.glob(f"*.{self.file_extension}"):
-                ids.append(file_path.stem)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            data = self._deserialize(content)
+            # Resolve environment variables
+            data = resolve_env_variables(data)
+            return self.model_class(**data)
+        except Exception as e:
+            logger.error(f"Error loading from {file_path}: {e}")
+            return None
+    
+    def list_ids(self) -> List[str]:
+        """List all item IDs in storage (including subdirectories)."""
+        ids = set()
+        try:
+            for file_path in self.directory.rglob(f"*.{self.file_extension}"):
+                ids.add(file_path.stem)
         except Exception as e:
             logger.error(f"Error listing IDs: {e}")
-        return ids
+        return list(ids)
     
     def search(self, **filters) -> List[T]:
         """Search items by field values."""
@@ -145,5 +208,5 @@ class StorageService(Generic[T]):
         return results
     
     def count(self) -> int:
-        """Count total items in storage."""
-        return len(list(self.directory.glob(f"*.{self.file_extension}")))
+        """Count total items in storage (including subdirectories)."""
+        return len(set(p.stem for p in self.directory.rglob(f"*.{self.file_extension}")))

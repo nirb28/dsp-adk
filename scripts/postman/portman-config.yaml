@@ -1,0 +1,7 @@
+version: 1
+overwrites:
+  - openApiOperation: '*::*'  # Targets all operations (wildcards supported)
+    overwriteRequestBaseUrl:
+      value: '{{adk-baseUrl}}'  # Set to your custom variable
+      overwrite: true  # Fully replace the original base URL reference
+      remove: false

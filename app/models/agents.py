@@ -6,6 +6,8 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+from ..core.base import ADKComponentConfig, ComponentType, ComponentStatus
+
 
 class AgentType(str, Enum):
     """Types of agents supported by the platform."""
@@ -60,13 +62,22 @@ class LLMConfig(BaseModel):
         extra = "allow"
 
 
-class AgentConfig(BaseModel):
-    """Complete agent configuration."""
-    id: str = Field(..., description="Unique agent identifier")
-    name: str = Field(..., description="Human-readable agent name")
-    description: Optional[str] = Field(default=None, description="Agent description")
-    type: AgentType = Field(default=AgentType.CONVERSATIONAL, description="Agent type")
-    status: AgentStatus = Field(default=AgentStatus.DRAFT, description="Agent status")
+class AgentConfig(ADKComponentConfig):
+    """
+    Complete agent configuration.
+    
+    Inherits standard fields from ADKComponentConfig:
+    - id, name, description, version
+    - component_type, status, enabled
+    - tags, category, metadata
+    - jwt_required, allowed_groups, allowed_roles
+    - dependencies, created_at, updated_at, created_by
+    """
+    # Override component type
+    component_type: ComponentType = Field(default=ComponentType.AGENT)
+    
+    # Agent-specific type
+    agent_type: AgentType = Field(default=AgentType.CONVERSATIONAL, description="Agent type")
     
     # LLM Configuration
     llm: LLMConfig = Field(..., description="LLM configuration")
@@ -83,21 +94,6 @@ class AgentConfig(BaseModel):
     
     # Memory Configuration
     memory: AgentMemoryConfig = Field(default_factory=AgentMemoryConfig, description="Memory configuration")
-    
-    # Security
-    jwt_required: bool = Field(default=True, description="Whether JWT authentication is required")
-    allowed_groups: List[str] = Field(default_factory=list, description="JWT groups allowed to use this agent")
-    allowed_roles: List[str] = Field(default_factory=list, description="JWT roles allowed to use this agent")
-    
-    # Metadata
-    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    created_at: Optional[datetime] = Field(default=None, description="Creation timestamp")
-    updated_at: Optional[datetime] = Field(default=None, description="Last update timestamp")
-    created_by: Optional[str] = Field(default=None, description="Creator user ID")
-    
-    class Config:
-        extra = "allow"
 
 
 class AgentResponse(BaseModel):
@@ -112,3 +108,26 @@ class AgentListResponse(BaseModel):
     success: bool = Field(default=True)
     agents: List[AgentConfig] = Field(default_factory=list)
     total: int = Field(default=0)
+
+
+class AgentRunRequest(BaseModel):
+    """Request model for running an agent."""
+    message: str = Field(..., description="User message to send to the agent")
+    context: Optional[Dict[str, Any]] = Field(default=None, description="Optional context dictionary")
+    history: Optional[List[Dict[str, str]]] = Field(default=None, description="Optional conversation history")
+    temperature: Optional[float] = Field(default=None, description="Override temperature")
+    max_tokens: Optional[int] = Field(default=None, description="Override max tokens")
+    stream: bool = Field(default=False, description="Whether to stream the response")
+
+
+class AgentRunResponse(BaseModel):
+    """Response model for agent execution."""
+    success: bool = Field(..., description="Whether execution was successful")
+    response: str = Field(..., description="Agent response text")
+    usage: Dict[str, Any] = Field(default_factory=dict, description="Token usage information")
+    model: str = Field(..., description="Model used")
+    provider: str = Field(..., description="Provider used")
+    duration_seconds: float = Field(..., description="Execution duration in seconds")
+    timestamp: str = Field(..., description="Execution timestamp")
+    agent_id: str = Field(..., description="Agent ID")
+    agent_name: str = Field(..., description="Agent name")

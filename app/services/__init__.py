@@ -7,6 +7,14 @@ from .tool_service import ToolService
 from .mcp_service import MCPService
 from .graph_service import GraphService
 from .adapter_service import AdapterService
+from .agent_executor import AgentExecutor, get_agent_executor, AgentExecutionError
+from .manifest_integration import (
+    ManifestIntegrationService,
+    ManifestConfig,
+    ManifestModuleConfig,
+    get_manifest_service,
+    configure_manifest_service,
+)
 
 __all__ = [
     "AuthService",
@@ -15,4 +23,14 @@ __all__ = [
     "MCPService",
     "GraphService",
     "AdapterService",
+    # Agent Execution
+    "AgentExecutor",
+    "get_agent_executor",
+    "AgentExecutionError",
+    # Manifest Integration
+    "ManifestIntegrationService",
+    "ManifestConfig",
+    "ManifestModuleConfig",
+    "get_manifest_service",
+    "configure_manifest_service",
 ]

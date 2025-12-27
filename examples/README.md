@@ -24,6 +24,7 @@ pip install httpx
 | 06 | [Conditional Graph](./06-conditional-graph/) | Advanced | Routing based on classification |
 | 07 | [Orchestrator Pattern](./07-orchestrator-pattern/) | Advanced | Multi-agent coordination |
 | 08 | [RAG Integration](./08-rag-integration/) | Advanced | Vector search for knowledge retrieval |
+| 09 | [Capabilities Demo](./09-capabilities-demo/) | Advanced | Modular capabilities system demonstration |
 
 ---
 
@@ -159,6 +160,25 @@ Pattern: Retrieve → Generate
 - Semantic search
 - Context injection
 - Citation handling
+
+### 09 - Capabilities Demo
+
+Demonstrates the ADK modular capabilities system.
+
+```
+Capabilities: sessions, memory, streaming, guardrails, cost_tracking, rate_limiting, model_router, advanced_graph
+```
+
+**Key Concepts:**
+- Session management with message history
+- Multi-scope memory (session, user, agent, global)
+- Real-time streaming with SSE
+- Guardrails (PII detection, content filtering)
+- Cost tracking with budgets
+- Rate limiting (sliding window, token bucket)
+- Intelligent model routing
+- Advanced graph execution (parallel, loops, human-in-loop)
+- Capability registry for lifecycle management
 
 ---
 

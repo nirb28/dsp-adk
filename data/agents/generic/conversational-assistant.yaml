@@ -4,6 +4,7 @@ description: A friendly, helpful conversational agent for general assistance and
 type: conversational
 status: active
 category: assistant
+jwt_required: false
 
 llm:
   provider: ${LLM_PROVIDER}

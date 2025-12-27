@@ -1,0 +1,1 @@
+portman --postmanConfigFile postman-config.json -c portman-config.yaml -u http://localhost:8100/openapi.json -o adk.postman_collection.json
