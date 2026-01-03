@@ -284,6 +284,8 @@ async def run_agent(
             kwargs["temperature"] = request.temperature
         if request.max_tokens is not None:
             kwargs["max_tokens"] = request.max_tokens
+        if getattr(request, "session_id", None):
+            kwargs["session_id"] = request.session_id
         
         result = await executor.run(
             agent=agent,
@@ -291,6 +293,9 @@ async def run_agent(
             context=request.context,
             history=request.history,
             user=user,
+            use_tools=request.use_tools,
+            max_tool_iterations=request.max_tool_iterations,
+            mock_tools=request.mock_tools,
             **kwargs
         )
         
@@ -347,6 +352,8 @@ async def stream_agent(
                 kwargs["temperature"] = request.temperature
             if request.max_tokens is not None:
                 kwargs["max_tokens"] = request.max_tokens
+            if getattr(request, "session_id", None):
+                kwargs["session_id"] = request.session_id
             
             async for chunk in executor.stream(
                 agent=agent,

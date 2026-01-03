@@ -13,6 +13,24 @@ import httpx
 ADK_URL = "http://localhost:8100"
 
 
+def _extract_wrapped(payload: dict, key: str):
+    if not isinstance(payload, dict):
+        return None
+    if key in payload and payload.get(key) is not None:
+        return payload.get(key)
+    return None
+
+
+def _error_detail(response: httpx.Response) -> str:
+    try:
+        data = response.json()
+        if isinstance(data, dict):
+            return data.get("detail") or data.get("message") or response.text
+    except Exception:
+        pass
+    return response.text
+
+
 async def main():
     """Run the data analysis workflow example."""
     print("=" * 60)
@@ -24,10 +42,16 @@ async def main():
         print("\n1. Loading data-analyst agent...")
         response = await client.get("/agents/data-analyst")
         if response.status_code == 200:
-            agent = response.json()
-            print(f"   Found: {agent['name']}")
+            payload = response.json()
+            agent = _extract_wrapped(payload, "agent")
+            if not agent:
+                print("   Unexpected response shape from /agents/{id}")
+                print(f"   Raw: {payload}")
+                return
+            print(f"   Found: {agent.get('name', 'N/A')}")
         else:
             print("   Agent not found.")
+            print(f"   Error: {_error_detail(response)}")
             return
         
         # 2. Load required tools
@@ -36,8 +60,14 @@ async def main():
         for tool_id in tools:
             response = await client.get(f"/tools/{tool_id}")
             if response.status_code == 200:
-                tool = response.json()
-                print(f"   ✓ {tool['name']}")
+                payload = response.json()
+                tool = _extract_wrapped(payload, "tool")
+                if not tool:
+                    print(f"   ✗ {tool_id}: Unexpected response shape")
+                    continue
+                print(f"   ✓ {tool.get('name', tool_id)}")
+            else:
+                print(f"   ✗ {tool_id}: {response.status_code} - {_error_detail(response)}")
         
         # 3. Load skills
         print("\n3. Loading skills...")
@@ -46,7 +76,9 @@ async def main():
             response = await client.get(f"/repository/skills/{skill_id}")
             if response.status_code == 200:
                 skill = response.json()
-                print(f"   ✓ {skill['name']}: {skill['description'][:40]}...")
+                print(f"   ✓ {skill.get('name', skill_id)}: {skill.get('description', '')[:40]}...")
+            else:
+                print(f"   ✗ {skill_id}: {response.status_code} - {_error_detail(response)}")
         
         # 4. Show workflow
         print("\n4. Data Analysis Workflow:")

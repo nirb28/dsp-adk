@@ -3,16 +3,32 @@ Tool management API endpoints.
 """
 import logging
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
+from pydantic import BaseModel, Field
 
 from ..models.tools import (
     ToolConfig, ToolResponse, ToolListResponse, ToolType
 )
 from ..models.auth import AuthenticatedUser
 from ..services.tool_service import get_tool_service, ToolService
+from ..services.agent_executor import AgentExecutor
 from .dependencies import get_current_user, get_optional_user, require_admin
 
 logger = logging.getLogger(__name__)
+
+
+class ToolExecuteRequest(BaseModel):
+    """Request model for tool execution."""
+    arguments: Dict[str, Any] = Field(..., description="Tool arguments")
+    mock: bool = Field(default=False, description="Use mock execution instead of real execution")
+
+
+class ToolExecuteResponse(BaseModel):
+    """Response model for tool execution."""
+    success: bool
+    tool_id: str
+    result: Dict[str, Any]
+    error: Optional[str] = None
 
 router = APIRouter(prefix="/tools", tags=["Tools"])
 
@@ -159,3 +175,81 @@ async def delete_tool(
             detail=response.message
         )
     return response
+
+
+@router.post("/{tool_id}/execute", response_model=ToolExecuteResponse, summary="Execute tool")
+async def execute_tool(
+    tool_id: str,
+    request: ToolExecuteRequest,
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
+    service: ToolService = Depends(get_service)
+):
+    """
+    Execute a tool with given arguments.
+    
+    This endpoint allows direct tool execution for testing and debugging.
+    The tool will be executed with the provided arguments and return the result.
+    
+    Args:
+        tool_id: ID of the tool to execute
+        request: Tool execution request with arguments and mock flag
+        user: Optional authenticated user (required if tool has jwt_required=true)
+        
+    Returns:
+        Tool execution result or error
+    """
+    import json
+    
+    # Get tool configuration
+    tool = service.get_tool(tool_id)
+    if not tool:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tool '{tool_id}' not found"
+        )
+    
+    # Check authentication if required
+    if tool.jwt_required and not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required for this tool"
+        )
+    
+    if tool.jwt_required and user:
+        has_access, error = service.check_user_access(tool, user)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=error
+            )
+    
+    # Execute tool
+    try:
+        executor = AgentExecutor()
+        result_json_str = await executor._execute_tool(tool, request.arguments, mock=request.mock)
+        result_data = json.loads(result_json_str)
+        
+        # Check if result contains an error
+        if isinstance(result_data, dict) and "error" in result_data:
+            return ToolExecuteResponse(
+                success=False,
+                tool_id=tool_id,
+                result=result_data,
+                error=result_data["error"]
+            )
+        
+        return ToolExecuteResponse(
+            success=True,
+            tool_id=tool_id,
+            result=result_data,
+            error=None
+        )
+        
+    except Exception as e:
+        logger.error(f"Error executing tool '{tool_id}': {e}", exc_info=True)
+        return ToolExecuteResponse(
+            success=False,
+            tool_id=tool_id,
+            result={},
+            error=str(e)
+        )

@@ -4,12 +4,13 @@ description: A versatile research agent that can gather, analyze, and synthesize
 type: research
 status: active
 category: research
+jwt_required: false
 
 llm:
   provider: ${LLM_PROVIDER}
   model: ${LLM_MODEL}
   endpoint: ${LLM_ENDPOINT}
-  api_key_env: ${LLM_API_KEY_ENV}
+  api_key: ${LLM_API_KEY}
   temperature: 0.3
   max_tokens: 4096
 
@@ -55,13 +56,13 @@ capabilities:
 
 tools:
   - web-search
-  - vector-search
   - text-processor
 
-skills:
-  - information-synthesis
-  - critical-analysis
-  - source-evaluation
+tool_configs:
+  web-search:
+    num_results: 5
+  text-processor:
+    max_output_length: 2000
 
 memory:
   enabled: true

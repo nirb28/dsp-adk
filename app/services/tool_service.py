@@ -23,6 +23,7 @@ class ToolService:
             model_class=ToolConfig,
             file_extension="yaml"
         )
+        self.verbose_logging = settings.verbose_logging
     
     def create_tool(
         self,
@@ -31,7 +32,9 @@ class ToolService:
     ) -> ToolResponse:
         """Create a new tool configuration."""
         try:
+            logger.debug(f"[TOOL_CREATE] Creating tool: {config.id}, type={config.tool_type}")
             if self.storage.exists(config.id):
+                logger.warning(f"[TOOL_CREATE] Tool '{config.id}' already exists")
                 return ToolResponse(
                     success=False,
                     message=f"Tool with ID '{config.id}' already exists",
@@ -45,7 +48,7 @@ class ToolService:
                 config.created_by = user.user_id
             
             if self.storage.save(config):
-                logger.info(f"Created tool '{config.id}'")
+                logger.info(f"[TOOL_CREATE] Created tool '{config.id}' successfully")
                 return ToolResponse(
                     success=True,
                     message=f"Tool '{config.name}' created successfully",
@@ -68,7 +71,15 @@ class ToolService:
     
     def get_tool(self, tool_id: str) -> Optional[ToolConfig]:
         """Get a tool by ID."""
-        return self.storage.load(tool_id)
+        logger.debug(f"[TOOL_LOAD] Loading tool: {tool_id}")
+        tool = self.storage.load(tool_id)
+        if tool:
+            logger.debug(f"[TOOL_LOAD] Tool '{tool_id}' loaded: type={tool.tool_type}, enabled={tool.enabled}")
+            if self.verbose_logging:
+                logger.info(f"[TOOL_LOAD:VERBOSE] Full tool config: {tool.model_dump_json(indent=2)}")
+        else:
+            logger.warning(f"[TOOL_LOAD] Tool '{tool_id}' not found")
+        return tool
     
     def update_tool(
         self,
@@ -155,18 +166,26 @@ class ToolService:
     ) -> ToolListResponse:
         """List all tools with optional filtering."""
         try:
-            tools = self.storage.list_all()
+            logger.debug(f"[TOOL_LIST] Listing tools: type={tool_type}, tags={tags}")
+            all_tools = self.storage.load_all()
+            logger.debug(f"[TOOL_LIST] Loaded {len(all_tools)} tools from storage")
             
+            # Apply filters
+            filtered_tools = all_tools
             if tool_type:
-                tools = [t for t in tools if t.type == tool_type]
-            
+                filtered_tools = [t for t in filtered_tools if t.tool_type == tool_type]
+                logger.debug(f"[TOOL_LIST] After type filter: {len(filtered_tools)} tools")
             if tags:
-                tools = [t for t in tools if any(tag in t.tags for tag in tags)]
+                filtered_tools = [
+                    t for t in filtered_tools
+                    if any(tag in t.tags for tag in tags)
+                ]
+                logger.debug(f"[TOOL_LIST] After tag filter: {len(filtered_tools)} tools")
             
             return ToolListResponse(
                 success=True,
-                tools=tools,
-                total=len(tools)
+                tools=filtered_tools,
+                total=len(filtered_tools)
             )
             
         except Exception as e:
@@ -226,8 +245,10 @@ class ToolService:
         tool: ToolConfig,
         user: AuthenticatedUser
     ) -> Tuple[bool, Optional[str]]:
-        """Check if a user has access to a tool."""
+        """Check if user has access to a tool."""
+        logger.debug(f"[TOOL_ACCESS] Checking access for user '{user.user_id}' to tool '{tool.id}'")
         if not tool.jwt_required:
+            logger.debug(f"[TOOL_ACCESS] Tool '{tool.id}' does not require JWT, access granted")
             return True, None
         
         if user.is_admin():

@@ -9,8 +9,39 @@ Usage:
 """
 import asyncio
 import httpx
-
+import logging
+import sys
 ADK_URL = "http://localhost:8100"
+
+# Configure logging to show debug messages
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# You can also configure specific loggers
+logger = logging.getLogger(__name__)
+
+def _extract_wrapped(payload: dict, key: str):
+    """Extract wrapped payload like {"agent": {...}} / {"tool": {...}}."""
+    if not isinstance(payload, dict):
+        return None
+    if key in payload and payload.get(key) is not None:
+        return payload.get(key)
+    return None
+
+
+def _error_detail(response: httpx.Response) -> str:
+    try:
+        data = response.json()
+        if isinstance(data, dict):
+            return data.get("detail") or data.get("message") or response.text
+    except Exception:
+        pass
+    return response.text
 
 
 async def main():
@@ -24,10 +55,16 @@ async def main():
         print("\n1. Loading research-agent...")
         response = await client.get("/agents/research-agent")
         if response.status_code == 200:
-            agent = response.json()
-            print(f"   Found: {agent['name']}")
+            payload = response.json()
+            agent = _extract_wrapped(payload, "agent")
+            if not agent:
+                print("   Unexpected response shape from /agents/{id}")
+                print(f"   Raw: {payload}")
+                return
+            print(f"   Found: {agent.get('name', 'N/A')}")
         else:
-            print("   Agent not found. Please ensure generic agents are loaded.")
+            print(f"   Failed to load agent: {response.status_code}")
+            print(f"   Error: {_error_detail(response)}")
             return
         
         # 2. Check for required tools
@@ -38,11 +75,16 @@ async def main():
         for tool_id in tools_needed:
             response = await client.get(f"/tools/{tool_id}")
             if response.status_code == 200:
-                tool = response.json()
+                payload = response.json()
+                tool = _extract_wrapped(payload, "tool")
+                if not tool:
+                    print(f"   ✗ {tool_id}: Unexpected response shape")
+                    continue
                 tools_available.append(tool_id)
-                print(f"   ✓ {tool['name']}: {tool['description'][:50]}...")
+                description = tool.get('description') or ''
+                print(f"   ✓ {tool.get('name', tool_id)}: {description[:50]}...")
             else:
-                print(f"   ✗ {tool_id}: Not found")
+                print(f"   ✗ {tool_id}: {response.status_code} - {_error_detail(response)}")
         
         # 3. Show tool configuration
         print("\n3. Tool Configurations:")
@@ -89,7 +131,48 @@ async def main():
         ]
         for i, q in enumerate(questions, 1):
             print(f"   {i}. \"{q}\"")
-        
+
+        # 7. Run the agent
+        print("\n7. Running the Agent:")
+        query = "What are the latest developments in quantum computing? Provide sources."
+        print(f"   Query: {query}")
+
+        # Set mock_tools=True for demo (no real API keys needed)
+        # Set mock_tools=False to use real tool execution (requires API configuration)
+        run_request = {
+            "message": query,
+            # "context": {
+            #     "research_depth": "standard",
+            #     "source_types": ["web"],
+            #     "include_citations": True,
+            #     "max_sources": 2,
+            # },
+            "use_tools": True,
+            "max_tool_iterations": 5,
+            "mock_tools": False  # Change to False for real tool execution
+        }
+
+        response = await client.post(
+            "/agents/research-agent/run",
+            json=run_request
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            print("\n   Agent Response:")
+            print(result.get("response", "No response"))
+            print("\n   Metadata:")
+            print(f"   - Model: {result.get('model', 'N/A')}")
+            print(f"   - Provider: {result.get('provider', 'N/A')}")
+            print(f"   - Duration: {result.get('duration_seconds', 0):.2f}s")
+            print(f"   - Tool Calls: {result.get('tool_calls_made', 0)}")
+            usage = result.get("usage") or {}
+            if usage:
+                print(f"   - Tokens: {usage.get('total_tokens', 'N/A')}")
+        else:
+            print(f"   Failed to run agent: {response.status_code}")
+            print(f"   Error: {_error_detail(response)}")
+         
         print("\n" + "=" * 60)
         print("Example complete!")
         print("=" * 60)

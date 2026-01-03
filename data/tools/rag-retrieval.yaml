@@ -1,0 +1,167 @@
+id: rag-retrieval
+name: RAG Document Retrieval Tool
+description: Retrieve relevant document chunks from RAG system using semantic search
+tool_type: api
+category: knowledge-retrieval
+
+usage_instructions: |
+  This tool retrieves relevant document chunks from a RAG (Retrieval Augmented Generation) system.
+  
+  Use this tool when you need to:
+  - Find relevant information from a knowledge base
+  - Get context for answering questions
+  - Retrieve documents related to a query
+  - Access specific document collections
+  
+  The tool connects to a RAG service (like dsp-rag) that uses vector similarity search
+  to find the most relevant document chunks for your query.
+  
+  Parameters:
+  - query: Your search question or keywords
+  - configuration_name: Which RAG configuration/collection to search
+  - top_k: Number of results to return (default: 5)
+  - use_reranking: Whether to rerank results for better relevance
+  - metadata_filter: Filter documents by metadata (optional)
+
+parameters:
+  - name: query
+    type: string
+    description: The search query or question to find relevant documents
+    required: true
+    
+  - name: configuration_name
+    type: string
+    description: RAG configuration name (knowledge base to search)
+    required: false
+    default: default
+    
+  - name: top_k
+    type: integer
+    description: Number of document chunks to retrieve
+    required: false
+    default: 5
+    
+  - name: use_reranking
+    type: boolean
+    description: Whether to use reranking for better relevance
+    required: false
+    default: true
+    
+  - name: metadata_filter
+    type: object
+    description: Filter documents by metadata (e.g., {"source": "manual", "category": "technical"})
+    required: false
+    
+  - name: min_score
+    type: number
+    description: Minimum similarity score threshold (0.0-1.0)
+    required: false
+    default: 0.0
+
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+    query:
+      type: string
+    configuration_name:
+      type: string
+    chunks:
+      type: array
+      items:
+        type: object
+        properties:
+          content:
+            type: string
+          metadata:
+            type: object
+          score:
+            type: number
+    total_chunks:
+      type: integer
+    error:
+      type: string
+
+implementation:
+  type: api
+  
+  # RAG service endpoint configuration
+  endpoint: ${RAG_ENDPOINT:http://localhost:8000}/retrieve
+  method: POST
+  
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+    # Optional: Add authentication if RAG service requires it
+    # Authorization: Bearer ${RAG_API_KEY}
+  
+  # Request body mapping
+  body_template: |
+    {
+      "query": "{{query}}",
+      "configuration_name": "{{configuration_name}}",
+      "top_k": {{top_k}},
+      "use_reranking": {{use_reranking}},
+      "metadata_filter": {{metadata_filter}},
+      "min_score": {{min_score}}
+    }
+  
+  # Response mapping
+  response_mapping:
+    success: "$.success"
+    chunks: "$.documents"
+    total_chunks: "$.total"
+    configuration_name: "$.configuration_name"
+  
+  # Connection settings
+  timeout: 30
+  retry_count: 2
+  retry_delay: 1
+  
+  # RAG service configurations
+  rag_configs:
+    default:
+      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      description: Default RAG configuration
+      
+    technical_docs:
+      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      configuration_name: technical-docs
+      description: Technical documentation knowledge base
+      
+    customer_support:
+      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      configuration_name: customer-support
+      description: Customer support knowledge base
+      
+    product_info:
+      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      configuration_name: product-info
+      description: Product information and specifications
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 60
+
+timeout: 30
+retry_count: 2
+
+tags:
+  - rag
+  - retrieval
+  - knowledge-base
+  - semantic-search
+  - documents
+
+metadata:
+  provider: custom
+  version: "1.0"
+  service: dsp-rag
+  capabilities:
+    - semantic_search
+    - vector_similarity
+    - metadata_filtering
+    - reranking
+    - configurable_collections

@@ -1,0 +1,36 @@
+# Data Insights Agent Configuration
+
+# Agent configuration
+agent:
+  id: data-insights
+  
+# Tools configuration
+tools:
+  - sql-database
+  - plotly-visualizer
+
+# LLM configuration
+llm:
+  provider: openai_compatible
+  model: meta/llama-3.3-70b-instruct
+  endpoint: https://integrate.api.nvidia.com/v1
+  api_key_env: NVAPI_KEY
+  temperature: 0.7
+  max_tokens: 3000
+
+# Database configuration
+database:
+  path: ./data/databases/sample.db
+  type: sqlite
+
+# Visualization configuration
+visualization:
+  output_dir: ./data/visualizations
+  default_format: html
+  default_theme: plotly_white
+  auto_open: false
+
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

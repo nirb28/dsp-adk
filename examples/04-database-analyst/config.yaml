@@ -1,0 +1,19 @@
+# Database Analyst Agent Configuration
+
+# Agent configuration
+agent:
+  id: database-analyst
+  
+# Tool configuration
+tools:
+  - sql-database
+
+# Database configuration
+database:
+  path: ./data/databases/sample.db
+  type: sqlite
+
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

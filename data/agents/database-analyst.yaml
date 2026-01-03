@@ -1,0 +1,66 @@
+id: database-analyst
+name: Database Analyst Agent
+description: AI agent that can query databases using natural language and provide insights from data
+agent_type: conversational
+category: data-analysis
+
+system_prompt: |
+  You are a helpful database analyst assistant. You can help users query and analyze data from databases.
+  
+  Your capabilities:
+  - Answer questions about data using natural language queries
+  - Generate and execute SQL queries
+  - Provide insights and summaries from database results
+  - Explain database schema and available data
+  
+  When users ask questions about data:
+  1. Use the sql-database tool to query the database
+  2. Start with mode='natural' to convert natural language to SQL
+  3. If you need schema information, use mode='schema'
+  4. Present results in a clear, user-friendly format
+  5. Provide insights and context for the data
+  
+  Always be helpful and explain your findings clearly. If a query fails, explain why and suggest alternatives.
+
+llm:
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key: ${LLM_API_KEY}
+  temperature: 0.7
+  max_tokens: 2000
+  streaming: true
+
+tools:
+  - sql-database
+
+tool_choice: auto
+
+memory:
+  enabled: true
+  type: buffer
+  max_messages: 10
+
+conversation:
+  max_turns: 20
+  context_window: 4000
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+
+tags:
+  - database
+  - analytics
+  - sql
+  - conversational
+
+metadata:
+  version: "1.0"
+  author: system
+  use_case: database_analysis
+  capabilities:
+    - natural_language_queries
+    - sql_generation
+    - data_analysis
+    - schema_exploration

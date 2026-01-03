@@ -1,0 +1,43 @@
+id: httpbin-test
+name: HTTPBin Test Tool
+description: Test API tool execution using httpbin.org (no API key required)
+tool_type: api
+
+parameters:
+  - name: test_data
+    type: string
+    description: Test data to send
+    required: true
+  - name: delay
+    type: integer
+    description: Response delay in seconds (0-10)
+    required: false
+    default: 0
+
+returns:
+  type: object
+  description: Echo response from httpbin
+
+implementation:
+  endpoint: https://httpbin.org/post
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    test_data: "{{test_data}}"
+    delay: "{{delay}}"
+    timestamp: "{{timestamp}}"
+
+jwt_required: false
+timeout: 15
+retry_count: 1
+
+tags:
+  - test
+  - api
+  - demo
+
+metadata:
+  provider: httpbin
+  version: "1.0"
+  note: "Uses httpbin.org for testing - no API key required"

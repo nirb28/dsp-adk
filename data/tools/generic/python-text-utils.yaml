@@ -1,0 +1,52 @@
+id: python-text-utils
+name: Python Text Utilities
+description: Python-based text processing utilities (summarize, count words, extract keywords)
+tool_type: python
+
+parameters:
+  - name: operation
+    type: string
+    description: Operation to perform (summarize, count_words, extract_keywords)
+    required: true
+    enum:
+      - summarize
+      - count_words
+      - extract_keywords
+  - name: text
+    type: string
+    description: Text to process
+    required: true
+  - name: max_length
+    type: integer
+    description: Maximum length for summarization (default 100)
+    required: false
+    default: 100
+  - name: max_keywords
+    type: integer
+    description: Maximum keywords to extract (default 5)
+    required: false
+    default: 5
+
+returns:
+  type: object
+  description: Result depends on operation
+
+implementation:
+  module: tools.text_utils
+  function: "{{operation}}_text"
+  # Note: This uses template substitution to call different functions
+  # based on the operation parameter
+
+jwt_required: false
+timeout: 10
+retry_count: 0
+
+tags:
+  - text
+  - python
+  - nlp
+  - utilities
+
+metadata:
+  provider: python
+  version: "1.0"

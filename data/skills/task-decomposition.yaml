@@ -4,6 +4,10 @@ description: Break down complex tasks into manageable subtasks with clear depend
 category: reasoning
 version: "1.0.0"
 
+default_application_modes:
+  - orchestration_step
+  - system_prompt_extension
+
 system_prompt: |
   When decomposing tasks:
   1. Understand the overall goal and success criteria
@@ -46,6 +50,38 @@ examples:
          2.1 Wireframes
          2.2 Visual design
       ...
+
+orchestration_steps:
+  - step_number: 1
+    instruction: "Understand the overall goal and define clear success criteria"
+    expected_output: "A clear statement of the goal and measurable success criteria"
+    depends_on: []
+    optional: false
+  - step_number: 2
+    instruction: "Identify the main components or phases of the task"
+    expected_output: "A list of 3-7 major components or phases"
+    depends_on: [1]
+    optional: false
+  - step_number: 3
+    instruction: "Break each component into atomic, actionable subtasks"
+    expected_output: "Detailed subtasks for each component with clear action verbs"
+    depends_on: [2]
+    optional: false
+  - step_number: 4
+    instruction: "Identify dependencies between subtasks"
+    expected_output: "Dependency map showing which tasks must be completed before others"
+    depends_on: [3]
+    optional: false
+  - step_number: 5
+    instruction: "Estimate effort and assign priorities to each subtask"
+    expected_output: "Priority levels (high/medium/low) and effort estimates for each task"
+    depends_on: [3]
+    optional: true
+  - step_number: 6
+    instruction: "Create a logical execution order based on dependencies and priorities"
+    expected_output: "Ordered task list with clear execution sequence"
+    depends_on: [4, 5]
+    optional: false
 
 required_capabilities:
   - multi_turn

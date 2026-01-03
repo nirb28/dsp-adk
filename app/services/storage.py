@@ -18,30 +18,68 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
 
-def resolve_env_variables(data: Any) -> Any:
+def resolve_env_variables(data: Any, max_depth: int = 10) -> Any:
     """
     Recursively resolve environment variables in data structures.
-    Supports ${VAR_NAME} syntax.
+    Supports both ${VAR_NAME} and $VAR_NAME syntax with nested resolution.
+    
+    Args:
+        data: Data structure to resolve
+        max_depth: Maximum recursion depth to prevent infinite loops
     """
     if isinstance(data, dict):
-        return {k: resolve_env_variables(v) for k, v in data.items()}
+        return {k: resolve_env_variables(v, max_depth) for k, v in data.items()}
     elif isinstance(data, list):
-        return [resolve_env_variables(item) for item in data]
+        return [resolve_env_variables(item, max_depth) for item in data]
     elif isinstance(data, str):
-        # Match ${VAR_NAME} pattern
-        pattern = r'\$\{([^}]+)\}'
-        matches = re.findall(pattern, data)
+        result = data
+        depth = 0
         
-        if matches:
-            result = data
-            for var_name in matches:
-                env_value = os.getenv(var_name, '')
-                if env_value:
-                    result = result.replace(f'${{{var_name}}}', env_value)
-                else:
-                    logger.warning(f"Environment variable '{var_name}' not set, leaving placeholder")
-            return result
-        return data
+        # Keep resolving until no more variables or max depth reached
+        while depth < max_depth:
+            original = result
+            
+            # First, match ${VAR_NAME:default} or ${VAR_NAME} pattern (with braces)
+            pattern_braces = r'\$\{([^}]+)\}'
+            matches_braces = re.findall(pattern_braces, result)
+            
+            if matches_braces:
+                for match in matches_braces:
+                    # Check if there's a default value (VAR:default syntax)
+                    if ':' in match:
+                        var_name, default_value = match.split(':', 1)
+                        env_value = os.getenv(var_name, default_value)
+                        result = result.replace(f'${{{match}}}', env_value)
+                    else:
+                        var_name = match
+                        env_value = os.getenv(var_name, '')
+                        if env_value:
+                            result = result.replace(f'${{{var_name}}}', env_value)
+                        else:
+                            logger.warning(f"Environment variable '{var_name}' not set, leaving placeholder")
+            
+            # Second, match $VAR_NAME pattern (without braces)
+            pattern_simple = r'\$([A-Za-z_][A-Za-z0-9_]*)'
+            matches_simple = re.findall(pattern_simple, result)
+            
+            if matches_simple:
+                for var_name in matches_simple:
+                    env_value = os.getenv(var_name, '')
+                    if env_value:
+                        result = result.replace(f'${var_name}', env_value)
+                    else:
+                        logger.warning(f"Environment variable '{var_name}' not set, leaving placeholder")
+            
+            # If nothing changed, we're done
+            if result == original:
+                break
+            
+            depth += 1
+        
+        if depth >= max_depth:
+            logger.warning(f"Maximum recursion depth ({max_depth}) reached resolving: {data}")
+        
+        return result
     else:
         return data
 

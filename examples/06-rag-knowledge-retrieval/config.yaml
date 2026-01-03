@@ -1,0 +1,40 @@
+# RAG Knowledge Retrieval Configuration
+
+# Agent configuration
+agent:
+  id: knowledge-assistant
+  
+# Tools configuration
+tools:
+  - rag-retrieval
+
+# RAG service configuration
+rag:
+  endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+  timeout: 30
+  retry_count: 2
+  
+  # Available configurations
+  configurations:
+    - name: default
+      description: Default knowledge base
+    - name: technical_docs
+      description: Technical documentation
+    - name: customer_support
+      description: Customer support articles
+    - name: product_info
+      description: Product information
+
+# LLM configuration
+llm:
+  provider: openai_compatible
+  model: meta/llama-3.3-70b-instruct
+  endpoint: https://integrate.api.nvidia.com/v1
+  api_key_env: NVAPI_KEY
+  temperature: 0.7
+  max_tokens: 2000
+
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

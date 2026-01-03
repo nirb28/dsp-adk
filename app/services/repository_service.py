@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+import json
 
 from ..config import get_settings
 from ..models.repository import (
@@ -28,6 +29,7 @@ class RepositoryService:
         self._assets: Dict[str, AssetMetadata] = {}
         self._skills: Dict[str, SkillConfig] = {}
         self._loaded = False
+        self.verbose_logging = self.settings.verbose_logging
     
     def _ensure_loaded(self):
         """Ensure assets are loaded from disk."""
@@ -37,36 +39,45 @@ class RepositoryService:
     
     def _load_all_assets(self):
         """Load all assets from the data directories."""
+        logger.debug("[REPO_LOAD] Starting repository asset loading")
         base_path = Path(self.settings.storage_path)
         
         # Load agents
+        logger.debug(f"[REPO_LOAD] Loading agents from {base_path / 'agents'}")
         self._load_assets_from_dir(base_path / "agents", AssetType.AGENT)
         
         # Load tools
+        logger.debug(f"[REPO_LOAD] Loading tools from {base_path / 'tools'}")
         self._load_assets_from_dir(base_path / "tools", AssetType.TOOL)
         
         # Load skills
+        logger.debug(f"[REPO_LOAD] Loading skills from {base_path / 'skills'}")
         self._load_skills_from_dir(base_path / "skills")
         
         # Load graphs
+        logger.debug(f"[REPO_LOAD] Loading graphs from {base_path / 'graphs'}")
         self._load_assets_from_dir(base_path / "graphs", AssetType.GRAPH)
         
         # Load adapters
+        logger.debug(f"[REPO_LOAD] Loading adapters from {base_path / 'adapters'}")
         self._load_assets_from_dir(base_path / "adapters", AssetType.ADAPTER)
         
-        logger.info(f"Loaded {len(self._assets)} assets and {len(self._skills)} skills")
+        logger.info(f"[REPO_LOAD] Loaded {len(self._assets)} assets and {len(self._skills)} skills")
     
     def _load_assets_from_dir(self, directory: Path, asset_type: AssetType):
         """Load assets from a directory recursively."""
         if not directory.exists():
+            logger.debug(f"[REPO_LOAD] Directory does not exist: {directory}")
             return
         
+        count = 0
         for file_path in directory.rglob("*.yaml"):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
                 
                 if not data or 'id' not in data:
+                    logger.debug(f"[REPO_LOAD] Skipping {file_path}: missing id")
                     continue
                 
                 # Create asset metadata
@@ -91,9 +102,13 @@ class RepositoryService:
                 # Store with type prefix to avoid ID collisions
                 key = f"{asset_type.value}:{asset.id}"
                 self._assets[key] = asset
+                count += 1
+                logger.debug(f"[REPO_LOAD] Loaded {asset_type.value}: {asset.id}")
                 
             except Exception as e:
-                logger.warning(f"Failed to load asset from {file_path}: {e}")
+                logger.warning(f"[REPO_LOAD] Failed to load asset from {file_path}: {e}")
+        
+        logger.debug(f"[REPO_LOAD] Loaded {count} {asset_type.value}(s) from {directory}")
     
     def _load_skills_from_dir(self, directory: Path):
         """Load skills from the skills directory."""
@@ -282,17 +297,28 @@ class RepositoryService:
         return self._assets.get(key)
     
     def get_skill(self, skill_id: str) -> Optional[SkillConfig]:
-        """Get a specific skill by ID."""
+        """Get a skill by ID."""
+        logger.debug(f"[SKILL_LOAD] Loading skill: {skill_id}")
         self._ensure_loaded()
-        return self._skills.get(skill_id)
+        skill = self._skills.get(skill_id)
+        if skill:
+            logger.debug(f"[SKILL_LOAD] Skill '{skill_id}' loaded: category={skill.category}")
+            if self.verbose_logging:
+                logger.info(f"[SKILL_LOAD:VERBOSE] Full skill config: {skill.model_dump_json(indent=2)}")
+        else:
+            logger.warning(f"[SKILL_LOAD] Skill '{skill_id}' not found")
+        return skill
     
     def list_skills(self, category: Optional[str] = None) -> SkillListResponse:
-        """List all skills, optionally filtered by category."""
+        """List all skills with optional category filter."""
+        logger.debug(f"[SKILL_LIST] Listing skills: category={category}")
         self._ensure_loaded()
         
         skills = list(self._skills.values())
+        logger.debug(f"[SKILL_LIST] Loaded {len(skills)} skills from repository")
         if category:
-            skills = [s for s in skills if s.category and s.category.value == category]
+            skills = [s for s in skills if s.category == category]
+            logger.debug(f"[SKILL_LIST] After category filter: {len(skills)} skills")
         
         return SkillListResponse(
             success=True,

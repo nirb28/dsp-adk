@@ -59,6 +59,9 @@ class ToolConfig(ADKComponentConfig):
     # For Python tools: module, function
     # For Shell tools: command, args
     # For MCP tools: mcp_server_id, tool_name
+
+    usage_instructions: Optional[str] = Field(default=None, description="Optional tool usage instructions")
+    fallback_to_user_message_params: List[str] = Field(default_factory=list, description="If missing, fill these params from the user message")
     
     # Tool-specific settings
     rate_limit: Optional[int] = Field(default=None, description="Rate limit per minute")

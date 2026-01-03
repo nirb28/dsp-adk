@@ -4,6 +4,10 @@ description: Generate clean, efficient, well-documented code in multiple program
 category: coding
 version: "1.0.0"
 
+default_application_modes:
+  - system_prompt_extension
+  - few_shot_examples
+
 system_prompt: |
   When generating code:
   1. Write clean, readable code following best practices
@@ -45,9 +49,40 @@ examples:
       from typing import bool
       
       def validate_email(email: str) -> bool:
-          """Validate email address format."""
+          """Validate email address format.
+          
+          Args:
+              email: Email address to validate
+              
+          Returns:
+              True if email is valid, False otherwise
+          """
           pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
           return bool(re.match(pattern, email))
+      ```
+  - input: "Create a function to calculate fibonacci numbers"
+    output: |
+      ```python
+      from functools import lru_cache
+      
+      @lru_cache(maxsize=None)
+      def fibonacci(n: int) -> int:
+          """Calculate the nth Fibonacci number using memoization.
+          
+          Args:
+              n: Position in Fibonacci sequence (0-indexed)
+              
+          Returns:
+              The nth Fibonacci number
+              
+          Raises:
+              ValueError: If n is negative
+          """
+          if n < 0:
+              raise ValueError("n must be non-negative")
+          if n <= 1:
+              return n
+          return fibonacci(n-1) + fibonacci(n-2)
       ```
 
 required_capabilities:

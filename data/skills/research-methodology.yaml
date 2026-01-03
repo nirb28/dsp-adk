@@ -1,0 +1,83 @@
+id: research-methodology
+name: Research Methodology
+description: Systematic approach to conducting thorough research with proper methodology
+category: research
+version: "1.0.0"
+
+default_application_modes:
+  - context_injection
+  - system_prompt_extension
+
+system_prompt: |
+  Apply rigorous research methodology:
+  1. Define clear research questions
+  2. Identify credible sources
+  3. Evaluate source reliability and bias
+  4. Cross-reference information across multiple sources
+  5. Document findings with proper citations
+  6. Distinguish between facts, opinions, and interpretations
+  
+  Maintain objectivity and present balanced perspectives.
+
+context_template: |
+  Research Context:
+  - Research Depth: {{research_depth}}
+  - Source Types: {{source_types}}
+  - Citation Required: {{require_citations}}
+  
+  Guidelines:
+  - Prioritize peer-reviewed and authoritative sources
+  - Note any conflicting information found
+  - Indicate confidence levels for findings
+  - Provide source attribution for all claims
+
+parameters:
+  - name: research_depth
+    type: string
+    description: Depth of research to conduct
+    enum: [quick, standard, comprehensive]
+    default: standard
+  - name: source_types
+    type: string
+    description: Types of sources to prioritize
+    default: "academic, news, official documents"
+  - name: require_citations
+    type: boolean
+    description: Whether citations are required
+    default: true
+
+examples:
+  - input: "Research the impact of AI on healthcare"
+    output: |
+      Based on research from multiple sources:
+      
+      1. Diagnostic Accuracy (Source: Nature Medicine, 2023)
+         - AI systems show 94% accuracy in medical imaging
+         - Reduces diagnostic errors by 30%
+      
+      2. Treatment Optimization (Source: JAMA, 2023)
+         - Personalized treatment plans improve outcomes by 25%
+         - AI-assisted drug discovery accelerates development
+      
+      Confidence Level: High (5+ peer-reviewed sources)
+
+required_capabilities:
+  - multi_turn
+  - tool_calling
+
+tags:
+  - research
+  - methodology
+  - analysis
+  - citations
+
+use_cases:
+  - Academic research
+  - Market analysis
+  - Literature reviews
+  - Fact-checking
+
+metadata:
+  author: system
+  rating: 4.8
+  usage_count: 0

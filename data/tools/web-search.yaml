@@ -1,7 +1,14 @@
 id: web-search
 name: Web Search Tool
 description: Search the web for information using a search API
-type: api
+tool_type: api
+
+usage_instructions: |
+  Only use the parameters defined in this tool schema.
+  This tool does not support opening results via cursor/id. If you need more info, run another web-search with a refined query and use the returned snippets/URLs.
+
+fallback_to_user_message_params:
+  - query
 
 parameters:
   - name: query
@@ -33,12 +40,15 @@ implementation:
   endpoint: ${SEARCH_API_ENDPOINT}
   method: GET
   headers:
-    Authorization: Bearer ${SEARCH_API_KEY}
+    Accept: application/json
+    Accept-Encoding: gzip
+    X-Subscription-Token: ${SEARCH_API_KEY}
   query_params:
     q: "{{query}}"
     count: "{{num_results}}"
+    freshness: "pw"
 
-jwt_required: true
+jwt_required: false
 allowed_groups: []
 allowed_roles: []
 rate_limit: 30

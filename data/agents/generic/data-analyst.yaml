@@ -4,6 +4,7 @@ description: Analyzes data, generates insights, creates visualizations, and prod
 type: analysis
 status: active
 category: analytics
+jwt_required: false
 
 llm:
   provider: ${LLM_PROVIDER}

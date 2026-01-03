@@ -1,0 +1,278 @@
+id: sql-database
+name: SQL Database Tool
+description: AI-powered database query tool with schema awareness and text-to-SQL capabilities (vanna.ai style)
+tool_type: python
+category: database
+
+usage_instructions: |
+  This tool provides AI-powered database querying capabilities:
+  1. Ask natural language questions about the data
+  2. Execute SQL queries directly
+  3. Get schema information
+  4. View sample queries and their purposes
+  
+  The tool understands the database schema and can convert natural language to SQL.
+  Use natural language for complex queries, or provide SQL directly for precise control.
+
+parameters:
+  - name: question
+    type: string
+    description: Natural language question about the data OR SQL query to execute
+    required: true
+  - name: mode
+    type: string
+    description: "Query mode: 'natural' for text-to-SQL, 'sql' for direct SQL, 'schema' for schema info"
+    required: false
+    default: natural
+    enum: [natural, sql, schema]
+  - name: database_name
+    type: string
+    description: Database connection name to use
+    required: false
+    default: default
+  - name: limit
+    type: integer
+    description: Maximum rows to return
+    required: false
+    default: 100
+
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+    mode:
+      type: string
+    question:
+      type: string
+    generated_sql:
+      type: string
+    results:
+      type: array
+    row_count:
+      type: integer
+    execution_time:
+      type: number
+    error:
+      type: string
+
+implementation:
+  type: python
+  module: tools.sql_database
+  function: query_database
+  
+  # Database connections configuration
+  databases:
+    default:
+      type: sqlite
+      path: ${DB_PATH:D:/ds/work/workspace/git/dsp-adk/data/databases/sample.db}
+      description: Sample SQLite database with customer and order data
+      
+      # Schema definition for AI understanding
+      schema:
+        tables:
+          - name: customers
+            description: Customer information and contact details
+            columns:
+              - name: customer_id
+                type: INTEGER
+                description: Unique customer identifier
+                primary_key: true
+              - name: name
+                type: TEXT
+                description: Customer full name
+              - name: email
+                type: TEXT
+                description: Customer email address
+              - name: country
+                type: TEXT
+                description: Customer country
+              - name: signup_date
+                type: DATE
+                description: Date customer signed up
+              - name: total_spent
+                type: REAL
+                description: Total amount spent by customer
+                
+          - name: orders
+            description: Customer orders and transactions
+            columns:
+              - name: order_id
+                type: INTEGER
+                description: Unique order identifier
+                primary_key: true
+              - name: customer_id
+                type: INTEGER
+                description: Customer who placed the order
+                foreign_key: customers.customer_id
+              - name: order_date
+                type: DATE
+                description: Date order was placed
+              - name: amount
+                type: REAL
+                description: Order total amount
+              - name: status
+                type: TEXT
+                description: Order status (pending, completed, cancelled)
+              - name: product_category
+                type: TEXT
+                description: Product category (electronics, clothing, books, etc)
+                
+          - name: products
+            description: Product catalog and inventory
+            columns:
+              - name: product_id
+                type: INTEGER
+                description: Unique product identifier
+                primary_key: true
+              - name: name
+                type: TEXT
+                description: Product name
+              - name: category
+                type: TEXT
+                description: Product category
+              - name: price
+                type: REAL
+                description: Product price
+              - name: stock
+                type: INTEGER
+                description: Available stock quantity
+              - name: supplier
+                type: TEXT
+                description: Product supplier name
+      
+      # Sample queries with purposes (training data for text-to-SQL)
+      sample_queries:
+        - purpose: Find top spending customers
+          question: Who are the top 5 customers by total spending?
+          sql: |
+            SELECT name, email, country, total_spent 
+            FROM customers 
+            ORDER BY total_spent DESC 
+            LIMIT 5
+          
+        - purpose: Get recent orders
+          question: Show me orders from the last 30 days
+          sql: |
+            SELECT o.order_id, c.name, o.order_date, o.amount, o.status 
+            FROM orders o 
+            JOIN customers c ON o.customer_id = c.customer_id 
+            WHERE o.order_date >= date('now', '-30 days')
+            ORDER BY o.order_date DESC
+          
+        - purpose: Calculate revenue by category
+          question: What is the total revenue by product category?
+          sql: |
+            SELECT product_category, 
+                   COUNT(*) as order_count,
+                   SUM(amount) as total_revenue,
+                   AVG(amount) as avg_order_value
+            FROM orders 
+            WHERE status = 'completed'
+            GROUP BY product_category 
+            ORDER BY total_revenue DESC
+          
+        - purpose: Find customers without orders
+          question: Which customers have never placed an order?
+          sql: |
+            SELECT c.customer_id, c.name, c.email, c.signup_date
+            FROM customers c
+            LEFT JOIN orders o ON c.customer_id = o.customer_id
+            WHERE o.order_id IS NULL
+          
+        - purpose: Get order statistics by country
+          question: Show order statistics grouped by customer country
+          sql: |
+            SELECT c.country,
+                   COUNT(DISTINCT c.customer_id) as customer_count,
+                   COUNT(o.order_id) as order_count,
+                   SUM(o.amount) as total_revenue,
+                   AVG(o.amount) as avg_order_value
+            FROM customers c
+            LEFT JOIN orders o ON c.customer_id = o.customer_id
+            GROUP BY c.country
+            ORDER BY total_revenue DESC
+          
+        - purpose: Find low stock products
+          question: Which products are running low on stock?
+          sql: |
+            SELECT product_id, name, category, price, stock, supplier
+            FROM products
+            WHERE stock < 10
+            ORDER BY stock ASC
+          
+        - purpose: Monthly revenue trend
+          question: What is the monthly revenue trend?
+          sql: |
+            SELECT strftime('%Y-%m', order_date) as month,
+                   COUNT(*) as order_count,
+                   SUM(amount) as revenue
+            FROM orders
+            WHERE status = 'completed'
+            GROUP BY month
+            ORDER BY month DESC
+            LIMIT 12
+          
+        - purpose: Customer lifetime value analysis
+          question: Show customer lifetime value distribution
+          sql: |
+            SELECT 
+              CASE 
+                WHEN total_spent < 100 THEN 'Low Value'
+                WHEN total_spent < 500 THEN 'Medium Value'
+                ELSE 'High Value'
+              END as customer_segment,
+              COUNT(*) as customer_count,
+              AVG(total_spent) as avg_spent
+            FROM customers
+            GROUP BY customer_segment
+            ORDER BY avg_spent DESC
+
+  # AI/LLM configuration for text-to-SQL
+  llm_config:
+    provider: ${LLM_PROVIDER:openai_compatible}
+    model: ${LLM_MODEL:meta/llama-3.3-70b-instruct}
+    endpoint: ${LLM_ENDPOINT:https://integrate.api.nvidia.com/v1}
+    api_key_env: NVAPI_KEY
+    temperature: 0.1
+    max_tokens: 500
+    
+  # Safety settings
+  read_only: true
+  max_rows: 1000
+  timeout: 30
+  allowed_operations:
+    - SELECT
+  blocked_keywords:
+    - DROP
+    - DELETE
+    - UPDATE
+    - INSERT
+    - ALTER
+    - CREATE
+    - TRUNCATE
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 20
+
+timeout: 30
+retry_count: 1
+
+tags:
+  - database
+  - sql
+  - ai
+  - text-to-sql
+  - vanna
+
+metadata:
+  provider: custom
+  version: "1.0"
+  model: vanna.ai
+  capabilities:
+    - text_to_sql
+    - schema_awareness
+    - sample_queries
+    - natural_language_query

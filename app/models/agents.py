@@ -2,11 +2,12 @@
 Agent configuration models.
 """
 from enum import Enum
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
 from datetime import datetime
 
 from ..core.base import ADKComponentConfig, ComponentType, ComponentStatus
+from .skills import SkillInstance
 
 
 class AgentType(str, Enum):
@@ -53,7 +54,7 @@ class LLMConfig(BaseModel):
     provider: str = Field(..., description="LLM provider: openai, groq, anthropic, nvidia, local")
     model: str = Field(..., description="Model name/identifier")
     endpoint: Optional[str] = Field(default=None, description="Custom endpoint URL")
-    api_key_env: Optional[str] = Field(default=None, description="Environment variable for API key")
+    api_key: Optional[str] = Field(default=None, description="API key (resolved from ${VARIABLE} references)")
     temperature: float = Field(default=0.7, description="Temperature for generation")
     max_tokens: int = Field(default=2048, description="Maximum tokens to generate")
     system_prompt: Optional[str] = Field(default=None, description="System prompt for the agent")
@@ -89,11 +90,22 @@ class AgentConfig(ADKComponentConfig):
     tools: List[str] = Field(default_factory=list, description="List of tool IDs assigned to this agent")
     mcp_servers: List[str] = Field(default_factory=list, description="List of MCP server IDs to use")
     
+    # Skill Integration - supports both simple IDs and full SkillInstance configs
+    skills: List[Union[str, SkillInstance]] = Field(
+        default_factory=list,
+        description="Skills assigned to this agent (skill IDs or SkillInstance objects)"
+    )
+    
     # Graph/Pipeline Integration
     graph_id: Optional[str] = Field(default=None, description="Associated graph/pipeline ID")
     
     # Memory Configuration
     memory: AgentMemoryConfig = Field(default_factory=AgentMemoryConfig, description="Memory configuration")
+    
+    @property
+    def type(self) -> AgentType:
+        """Backward compatibility property for agent_type."""
+        return self.agent_type
 
 
 class AgentResponse(BaseModel):
@@ -115,9 +127,13 @@ class AgentRunRequest(BaseModel):
     message: str = Field(..., description="User message to send to the agent")
     context: Optional[Dict[str, Any]] = Field(default=None, description="Optional context dictionary")
     history: Optional[List[Dict[str, str]]] = Field(default=None, description="Optional conversation history")
+    session_id: Optional[str] = Field(default=None, description="Optional session ID for correlating runs")
     temperature: Optional[float] = Field(default=None, description="Override temperature")
     max_tokens: Optional[int] = Field(default=None, description="Override max tokens")
     stream: bool = Field(default=False, description="Whether to stream the response")
+    use_tools: bool = Field(default=True, description="Whether to enable tool calling")
+    max_tool_iterations: int = Field(default=5, description="Maximum number of tool calling iterations")
+    mock_tools: bool = Field(default=False, description="Use mock tool responses instead of real execution")
 
 
 class AgentRunResponse(BaseModel):

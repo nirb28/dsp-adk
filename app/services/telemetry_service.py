@@ -15,6 +15,7 @@ from ..models.telemetry import (
     AgentAction, Trace, ActionType, SpanStatus, SpanKind,
     TraceQueryRequest, TraceListResponse, SpanListResponse, TelemetryStats
 )
+from .langfuse_service import get_langfuse_service
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class TelemetryService:
     
     def __init__(self):
         self.settings = get_settings()
+        self.langfuse_service = get_langfuse_service()
         self._traces: Dict[str, Trace] = {}  # In-memory trace storage
         self._spans: List[AgentAction] = []  # All spans for querying
         self._http_client: Optional[httpx.AsyncClient] = None
@@ -33,12 +35,12 @@ class TelemetryService:
         # OTEL endpoint configuration
         self.otel_endpoint = getattr(self.settings, 'otel_endpoint', None)
         self.otel_enabled = getattr(self.settings, 'otel_enabled', True)
-        self.service_name = "adk"
+        self.service_name = getattr(self.settings, 'otel_service_name', 'adk')
         self.service_version = "0.1.0"
         
         # Retention settings
-        self.max_traces = 10000
-        self.max_spans = 100000
+        self.max_traces = getattr(self.settings, 'otel_max_traces', 10000)
+        self.max_spans = getattr(self.settings, 'otel_max_spans', 100000)
     
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client for OTEL export."""
@@ -52,6 +54,12 @@ class TelemetryService:
         if self._http_client:
             await self._http_client.aclose()
             self._http_client = None
+
+        try:
+            self.langfuse_service.flush()
+            self.langfuse_service.shutdown()
+        except Exception:
+            pass
     
     def generate_trace_id(self) -> str:
         """Generate a new trace ID."""
@@ -87,12 +95,17 @@ class TelemetryService:
         
         self._traces[trace_id] = trace
         self._cleanup_old_traces()
+
+        try:
+            self.langfuse_service.on_trace_started(trace)
+        except Exception:
+            pass
         
         logger.debug(f"Started trace {trace_id}: {name}")
         return trace
     
     def end_trace(self, trace_id: str, status: SpanStatus = SpanStatus.OK):
-        """End a trace."""
+        """End a trace and queue spans for export."""
         if trace_id not in self._traces:
             logger.warning(f"Trace {trace_id} not found")
             return
@@ -111,6 +124,24 @@ class TelemetryService:
         trace.error_count = sum(1 for s in trace.spans if s.status == SpanStatus.ERROR)
         
         logger.debug(f"Ended trace {trace_id} with status {status}")
+
+        try:
+            self.langfuse_service.on_trace_ended(trace_id=trace_id, status=status)
+        except Exception:
+            pass
+        
+        # Trigger immediate export in background
+        if self.otel_enabled and trace.spans:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(self.export_to_otel(trace.spans))
+                else:
+                    # If no event loop is running, export synchronously
+                    loop.run_until_complete(self.export_to_otel(trace.spans))
+            except RuntimeError:
+                # No event loop available, log warning
+                logger.warning(f"Cannot export trace {trace_id}: no event loop available")
     
     def log_action(
         self,
@@ -137,6 +168,13 @@ class TelemetryService:
         kind: SpanKind = SpanKind.INTERNAL
     ) -> AgentAction:
         """Log an agent action as a span."""
+        if trace_id in self._traces:
+            trace = self._traces[trace_id]
+            if session_id is None:
+                session_id = trace.session_id
+            if user_id is None:
+                user_id = trace.user_id
+
         span_id = self.generate_span_id()
         now = datetime.now(timezone.utc)
         
@@ -177,9 +215,42 @@ class TelemetryService:
         
         # Queue for export
         self._export_queue.append(action)
+
+        try:
+            self.langfuse_service.on_action_started(action)
+        except Exception:
+            pass
         
         logger.debug(f"Logged action {action_type}: {name} (trace={trace_id}, span={span_id})")
         return action
+    
+    def add_span_event(
+        self,
+        span_id: str,
+        name: str,
+        attributes: Optional[Dict[str, Any]] = None
+    ):
+        """Add an event to a span for detailed payload tracking."""
+        for span in reversed(self._spans):
+            if span.span_id == span_id:
+                event = {
+                    "name": name,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "attributes": attributes or {}
+                }
+                span.events.append(event)
+                logger.debug(f"Added event '{name}' to span {span_id}")
+
+                try:
+                    self.langfuse_service.on_span_event(
+                        trace_id=span.trace_id,
+                        span_id=span_id,
+                        name=name,
+                        attributes=attributes or {}
+                    )
+                except Exception:
+                    pass
+                break
     
     def complete_action(
         self,
@@ -202,6 +273,11 @@ class TelemetryService:
                     span.token_count = token_count
                 if span.start_time and span.end_time:
                     span.duration_ms = (span.end_time - span.start_time).total_seconds() * 1000
+
+                try:
+                    self.langfuse_service.on_action_completed(span)
+                except Exception:
+                    pass
                 break
     
     async def export_to_otel(self, spans: List[AgentAction]) -> bool:
@@ -211,6 +287,7 @@ class TelemetryService:
             return True
         
         try:
+            logger.info(f"[TELEMETRY] Exporting {len(spans)} spans to {self.otel_endpoint}/v1/traces")
             client = await self._get_client()
             
             # Convert spans to OTLP JSON format
@@ -223,14 +300,14 @@ class TelemetryService:
             )
             
             if response.status_code in [200, 202]:
-                logger.debug(f"Exported {len(spans)} spans to OTEL")
+                logger.info(f"[TELEMETRY] Successfully exported {len(spans)} spans to OTEL (status: {response.status_code})")
                 return True
             else:
-                logger.warning(f"OTEL export failed: {response.status_code}")
+                logger.error(f"[TELEMETRY] OTEL export failed with status {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error exporting to OTEL: {e}")
+            logger.error(f"[TELEMETRY] Error exporting to OTEL: {e}", exc_info=True)
             return False
     
     def _convert_to_otlp(self, spans: List[AgentAction]) -> Dict[str, Any]:
@@ -238,6 +315,38 @@ class TelemetryService:
         otlp_spans = []
         
         for span in spans:
+            # Build base attributes
+            base_attrs = {
+                "adk.action_type": span.action_type.value,
+                "adk.agent_id": span.agent_id,
+                "adk.graph_id": span.graph_id,
+                "adk.node_id": span.node_id,
+                "adk.tool_id": span.tool_id,
+                "adk.user_id": span.user_id,
+                "adk.session_id": span.session_id,
+                "adk.token_count": span.token_count,
+                "adk.input_tokens": span.input_tokens,
+                "adk.output_tokens": span.output_tokens,
+            }
+            
+            # Add input/output data as JSON strings for better visibility
+            if span.input_data:
+                try:
+                    import json
+                    base_attrs["adk.input_data"] = json.dumps(span.input_data)
+                except:
+                    base_attrs["adk.input_data"] = str(span.input_data)
+            
+            if span.output_data:
+                try:
+                    import json
+                    base_attrs["adk.output_data"] = json.dumps(span.output_data)
+                except:
+                    base_attrs["adk.output_data"] = str(span.output_data)
+            
+            # Merge with custom attributes
+            all_attrs = {**base_attrs, **span.attributes}
+            
             otlp_span = {
                 "traceId": span.trace_id,
                 "spanId": span.span_id,
@@ -250,21 +359,11 @@ class TelemetryService:
                     "code": self._status_to_otlp(span.status),
                     "message": span.error_message or ""
                 },
-                "attributes": self._dict_to_otlp_attributes({
-                    "adk.action_type": span.action_type.value,
-                    "adk.agent_id": span.agent_id,
-                    "adk.graph_id": span.graph_id,
-                    "adk.node_id": span.node_id,
-                    "adk.tool_id": span.tool_id,
-                    "adk.user_id": span.user_id,
-                    "adk.session_id": span.session_id,
-                    "adk.token_count": span.token_count,
-                    **span.attributes
-                }),
+                "attributes": self._dict_to_otlp_attributes(all_attrs),
                 "events": [
                     {
                         "name": e.get("name", "event"),
-                        "timeUnixNano": int(datetime.now(timezone.utc).timestamp() * 1e9),
+                        "timeUnixNano": self._parse_event_timestamp(e.get("timestamp")),
                         "attributes": self._dict_to_otlp_attributes(e.get("attributes", {}))
                     }
                     for e in span.events
@@ -324,6 +423,20 @@ class TelemetryService:
             SpanStatus.ERROR: 2
         }
         return mapping.get(status, 0)
+    
+    def _parse_event_timestamp(self, timestamp_str: Optional[str]) -> int:
+        """Parse event timestamp string to Unix nanoseconds."""
+        if not timestamp_str:
+            return int(datetime.now(timezone.utc).timestamp() * 1e9)
+        
+        try:
+            # Try parsing ISO format timestamp
+            from dateutil import parser
+            dt = parser.isoparse(timestamp_str)
+            return int(dt.timestamp() * 1e9)
+        except:
+            # Fallback to current time
+            return int(datetime.now(timezone.utc).timestamp() * 1e9)
     
     async def _flush_export_queue(self):
         """Flush pending exports."""

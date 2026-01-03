@@ -9,6 +9,15 @@ from datetime import datetime
 from ..core.base import ADKComponentConfig, ComponentType
 
 
+class SkillApplicationMode(str, Enum):
+    """How a skill should be applied to an agent."""
+    SYSTEM_PROMPT_EXTENSION = "system_prompt_extension"  # Extend system prompt
+    FEW_SHOT_EXAMPLES = "few_shot_examples"  # Add few-shot examples to messages
+    ORCHESTRATION_STEP = "orchestration_step"  # Add as orchestration/planning step
+    CONTEXT_INJECTION = "context_injection"  # Inject as context before user message
+    ALL = "all"  # Apply all modes
+
+
 class SkillCategory(str, Enum):
     """Categories of skills."""
     REASONING = "reasoning"
@@ -35,6 +44,15 @@ class SkillParameter(BaseModel):
     max_value: Optional[float] = Field(default=None, description="Maximum value for numeric types")
 
 
+class OrchestrationStep(BaseModel):
+    """Defines an orchestration step for a skill."""
+    step_number: int = Field(..., description="Order in the orchestration sequence")
+    instruction: str = Field(..., description="Instruction for this step")
+    expected_output: Optional[str] = Field(default=None, description="Description of expected output")
+    depends_on: List[int] = Field(default_factory=list, description="Step numbers this depends on")
+    optional: bool = Field(default=False, description="Whether this step is optional")
+
+
 class SkillConfig(ADKComponentConfig):
     """
     Configuration for a reusable skill.
@@ -52,9 +70,27 @@ class SkillConfig(ADKComponentConfig):
     # Skill category
     skill_category: SkillCategory = Field(default=SkillCategory.CUSTOM, description="Skill category")
     
+    # Application modes - how this skill should be applied
+    default_application_modes: List[SkillApplicationMode] = Field(
+        default_factory=lambda: [SkillApplicationMode.SYSTEM_PROMPT_EXTENSION],
+        description="Default modes for applying this skill"
+    )
+    
     # Skill definition
     system_prompt: str = Field(..., description="System prompt that defines this skill")
-    examples: List[Dict[str, str]] = Field(default_factory=list, description="Few-shot examples")
+    examples: List[Dict[str, str]] = Field(default_factory=list, description="Few-shot examples for demonstration")
+    
+    # Orchestration steps (for workflow/planning skills)
+    orchestration_steps: List[OrchestrationStep] = Field(
+        default_factory=list,
+        description="Step-by-step orchestration instructions"
+    )
+    
+    # Context template (for context injection mode)
+    context_template: Optional[str] = Field(
+        default=None,
+        description="Template for injecting skill context before user message"
+    )
     
     # Configurable parameters
     parameters: List[SkillParameter] = Field(default_factory=list, description="Configurable parameters")
@@ -73,10 +109,15 @@ class SkillConfig(ADKComponentConfig):
 
 
 class SkillInstance(BaseModel):
-    """An instance of a skill with configured parameters."""
+    """An instance of a skill with configured parameters and application modes."""
     skill_id: str = Field(..., description="Reference to skill template")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Configured parameter values")
-    enabled: bool = Field(default=True)
+    application_modes: Optional[List[SkillApplicationMode]] = Field(
+        default=None,
+        description="Override default application modes for this instance"
+    )
+    priority: int = Field(default=0, description="Priority order for applying skills (higher = earlier)")
+    enabled: bool = Field(default=True, description="Whether this skill instance is enabled")
 
 
 class SkillResponse(BaseModel):

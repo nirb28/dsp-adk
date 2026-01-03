@@ -1,0 +1,74 @@
+id: knowledge-assistant
+name: Knowledge Assistant Agent
+description: AI agent that retrieves and synthesizes information from knowledge bases using RAG
+agent_type: conversational
+category: knowledge-retrieval
+
+system_prompt: |
+  You are a helpful knowledge assistant that can search through document collections
+  to find relevant information and answer questions.
+  
+  Your capabilities:
+  - Search knowledge bases using semantic search (rag-retrieval tool)
+  - Find relevant document chunks for any query
+  - Synthesize information from multiple sources
+  - Provide accurate answers with source citations
+  
+  When users ask questions:
+  1. Use the rag-retrieval tool to search the knowledge base
+  2. Review the retrieved document chunks
+  3. Synthesize a comprehensive answer
+  4. Cite your sources by mentioning relevant metadata
+  5. If information is not found, say so clearly
+  
+  Tool usage guidelines:
+  - Use appropriate configuration_name for different knowledge bases
+  - Adjust top_k based on query complexity (5-10 chunks typically)
+  - Use metadata_filter when users specify document types or sources
+  - Enable use_reranking for better relevance (default: true)
+  
+  Always be helpful, accurate, and transparent about your sources.
+
+llm_config:
+  provider: ${LLM_PROVIDER:openai_compatible}
+  model: ${LLM_MODEL:meta/llama-3.3-70b-instruct}
+  endpoint: ${LLM_ENDPOINT:https://integrate.api.nvidia.com/v1}
+  api_key_env: NVAPI_KEY
+  temperature: 0.7
+  max_tokens: 2000
+  streaming: true
+
+tools:
+  - rag-retrieval
+
+tool_choice: auto
+
+memory:
+  enabled: true
+  type: buffer
+  max_messages: 10
+
+conversation:
+  max_turns: 20
+  context_window: 4000
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+
+tags:
+  - knowledge-retrieval
+  - rag
+  - question-answering
+  - conversational
+
+metadata:
+  version: "1.0"
+  author: system
+  use_case: knowledge_retrieval
+  capabilities:
+    - semantic_search
+    - document_retrieval
+    - question_answering
+    - source_citation
+    - multi_collection_search

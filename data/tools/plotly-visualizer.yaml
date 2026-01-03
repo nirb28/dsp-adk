@@ -1,0 +1,205 @@
+id: plotly-visualizer
+name: Plotly Visualization Tool
+description: Create interactive visualizations using Plotly from data arrays or database results
+tool_type: python
+category: visualization
+
+usage_instructions: |
+  This tool creates interactive Plotly visualizations from data.
+  
+  Supported chart types:
+  - bar: Bar charts for categorical comparisons
+  - line: Line charts for trends over time
+  - scatter: Scatter plots for relationships
+  - pie: Pie charts for proportions
+  - histogram: Histograms for distributions
+  - box: Box plots for statistical distributions
+  - heatmap: Heatmaps for correlation matrices
+  - table: Interactive data tables
+  
+  The tool accepts data in multiple formats:
+  1. Array of dictionaries (from database results)
+  2. Separate x and y arrays
+  3. Pandas-style data structures
+  
+  Output formats:
+  - html: Interactive HTML file (default)
+  - json: Plotly JSON specification
+  - image: Static image (png, jpg, svg)
+
+parameters:
+  - name: chart_type
+    type: string
+    description: Type of chart to create
+    required: true
+    enum: [bar, line, scatter, pie, histogram, box, heatmap, table, multi]
+    
+  - name: data
+    type: array
+    description: Data to visualize (array of objects with key-value pairs)
+    required: true
+    
+  - name: x_column
+    type: string
+    description: Column name for x-axis (required for most chart types)
+    required: false
+    
+  - name: y_column
+    type: string
+    description: Column name for y-axis (required for most chart types)
+    required: false
+    
+  - name: color_column
+    type: string
+    description: Column name for color grouping
+    required: false
+    
+  - name: title
+    type: string
+    description: Chart title
+    required: false
+    default: ""
+    
+  - name: x_label
+    type: string
+    description: X-axis label
+    required: false
+    
+  - name: y_label
+    type: string
+    description: Y-axis label
+    required: false
+    
+  - name: output_format
+    type: string
+    description: Output format (html, json, or image)
+    required: false
+    default: html
+    enum: [html, json, image]
+    
+  - name: output_path
+    type: string
+    description: Path to save the visualization (relative to data/visualizations/)
+    required: false
+    
+  - name: width
+    type: integer
+    description: Chart width in pixels
+    required: false
+    default: 800
+    
+  - name: height
+    type: integer
+    description: Chart height in pixels
+    required: false
+    default: 600
+    
+  - name: theme
+    type: string
+    description: Plotly theme (plotly, plotly_white, plotly_dark, ggplot2, seaborn, simple_white)
+    required: false
+    default: plotly
+    enum: [plotly, plotly_white, plotly_dark, ggplot2, seaborn, simple_white, none]
+    
+  - name: show_legend
+    type: boolean
+    description: Whether to show legend
+    required: false
+    default: true
+    
+  - name: orientation
+    type: string
+    description: Chart orientation (v=vertical, h=horizontal) for bar charts
+    required: false
+    default: v
+    enum: [v, h]
+
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+    chart_type:
+      type: string
+    output_format:
+      type: string
+    output_path:
+      type: string
+    file_url:
+      type: string
+    data_points:
+      type: integer
+    plotly_json:
+      type: object
+    error:
+      type: string
+
+implementation:
+  type: python
+  module: tools.plotly_visualizer
+  function: create_visualization
+  
+  # Output configuration
+  output_directory: ${VIZ_OUTPUT_DIR:./data/visualizations}
+  auto_open: false
+  
+  # Default styling
+  default_colors:
+    - "#1f77b4"
+    - "#ff7f0e"
+    - "#2ca02c"
+    - "#d62728"
+    - "#9467bd"
+    - "#8c564b"
+    - "#e377c2"
+    - "#7f7f7f"
+    - "#bcbd22"
+    - "#17becf"
+  
+  # Chart-specific defaults
+  chart_defaults:
+    bar:
+      bargap: 0.2
+      bargroupgap: 0.1
+    line:
+      line_width: 2
+      marker_size: 6
+    scatter:
+      marker_size: 8
+      marker_opacity: 0.7
+    pie:
+      hole: 0
+      textposition: auto
+    histogram:
+      nbins: 30
+      opacity: 0.7
+    box:
+      boxmean: true
+    heatmap:
+      colorscale: Viridis
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 30
+
+timeout: 30
+retry_count: 1
+
+tags:
+  - visualization
+  - plotly
+  - charts
+  - analytics
+
+metadata:
+  provider: custom
+  version: "1.0"
+  library: plotly
+  capabilities:
+    - interactive_charts
+    - multiple_chart_types
+    - html_export
+    - json_export
+    - image_export
+    - custom_styling

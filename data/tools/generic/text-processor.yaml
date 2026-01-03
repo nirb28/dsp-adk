@@ -1,7 +1,7 @@
 id: text-processor
 name: Text Processor Tool
 description: Process and transform text with various operations like summarize, extract, format, translate
-type: function
+tool_type: python
 category: text
 
 parameters:
@@ -13,7 +13,10 @@ parameters:
     type: string
     description: The operation to perform
     required: true
-    enum: [summarize, extract_entities, extract_keywords, format, translate, sentiment, classify]
+    enum:
+      - summarize
+      - count_words
+      - extract_keywords
   - name: options
     type: object
     description: Operation-specific options
@@ -40,9 +43,11 @@ config_schema:
       items:
         type: string
 
+jwt_required: false
+
 implementation:
-  type: python
-  handler: tools.text_processor.execute
+  module: tools.text_utils
+  function: "{{operation}}"
 
 tags:
   - generic

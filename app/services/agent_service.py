@@ -23,6 +23,7 @@ class AgentService:
             model_class=AgentConfig,
             file_extension="yaml"
         )
+        self.verbose_logging = settings.verbose_logging
     
     def create_agent(
         self,
@@ -31,8 +32,10 @@ class AgentService:
     ) -> AgentResponse:
         """Create a new agent configuration."""
         try:
+            logger.debug(f"[AGENT_CREATE] Creating agent: {config.id}, type={config.agent_type}")
             # Check if agent already exists
             if self.storage.exists(config.id):
+                logger.warning(f"[AGENT_CREATE] Agent '{config.id}' already exists")
                 return AgentResponse(
                     success=False,
                     message=f"Agent with ID '{config.id}' already exists",
@@ -48,7 +51,7 @@ class AgentService:
             
             # Save agent
             if self.storage.save(config):
-                logger.info(f"Created agent '{config.id}' by {user.user_id if user else 'system'}")
+                logger.info(f"[AGENT_CREATE] Created agent '{config.id}' by {user.user_id if user else 'system'}")
                 return AgentResponse(
                     success=True,
                     message=f"Agent '{config.name}' created successfully",
@@ -71,7 +74,15 @@ class AgentService:
     
     def get_agent(self, agent_id: str) -> Optional[AgentConfig]:
         """Get an agent by ID."""
-        return self.storage.load(agent_id)
+        logger.debug(f"[AGENT_LOAD] Loading agent: {agent_id}")
+        agent = self.storage.load(agent_id)
+        if agent:
+            logger.debug(f"[AGENT_LOAD] Agent '{agent_id}' loaded: type={agent.agent_type}, status={agent.status}, tools={len(agent.tools) if agent.tools else 0}")
+            if self.verbose_logging:
+                logger.info(f"[AGENT_LOAD:VERBOSE] Full agent config: {agent.model_dump_json(indent=2)}")
+        else:
+            logger.warning(f"[AGENT_LOAD] Agent '{agent_id}' not found")
+        return agent
     
     def update_agent(
         self,
@@ -159,20 +170,26 @@ class AgentService:
     ) -> AgentListResponse:
         """List all agents with optional filtering."""
         try:
-            agents = self.storage.list_all()
+            logger.debug(f"[AGENT_LIST] Listing agents: status={status}, tags={tags}")
+            all_agents = self.storage.list_all()
+            logger.debug(f"[AGENT_LIST] Loaded {len(all_agents)} agents from storage")
             
-            # Filter by status
+            # Apply filters
+            filtered_agents = all_agents
             if status:
-                agents = [a for a in agents if a.status == status]
-            
-            # Filter by tags
+                filtered_agents = [a for a in filtered_agents if a.status == status]
+                logger.debug(f"[AGENT_LIST] After status filter: {len(filtered_agents)} agents")
             if tags:
-                agents = [a for a in agents if any(t in a.tags for t in tags)]
+                filtered_agents = [
+                    a for a in filtered_agents
+                    if any(tag in a.tags for tag in tags)
+                ]
+                logger.debug(f"[AGENT_LIST] After tag filter: {len(filtered_agents)} agents")
             
             return AgentListResponse(
                 success=True,
-                agents=agents,
-                total=len(agents)
+                agents=filtered_agents,
+                total=len(filtered_agents)
             )
             
         except Exception as e:
@@ -203,8 +220,10 @@ class AgentService:
         agent: AgentConfig,
         user: AuthenticatedUser
     ) -> Tuple[bool, Optional[str]]:
-        """Check if a user has access to an agent."""
+        """Check if user has access to an agent."""
+        logger.debug(f"[AGENT_ACCESS] Checking access for user '{user.user_id}' to agent '{agent.id}'")
         if not agent.jwt_required:
+            logger.debug(f"[AGENT_ACCESS] Agent '{agent.id}' does not require JWT, access granted")
             return True, None
         
         if user.is_admin():

@@ -2,9 +2,10 @@
 Configuration settings for the ADK platform.
 """
 import os
+import re
 from pydantic_settings import BaseSettings
-from pydantic import Field
-from typing import Optional
+from pydantic import Field, model_validator
+from typing import Optional, Any
 
 
 class Settings(BaseSettings):
@@ -36,7 +37,45 @@ class Settings(BaseSettings):
     otel_max_spans: int = Field(default=100000, description="Maximum spans to keep in memory")
     
     # Logging
-    log_level: str = Field(default="INFO", description="Logging level")
+    log_level: str = Field(default="DEBUG", description="Logging level")
+    verbose_logging: bool = Field(default=False, description="Enable verbose payload logging (logs all request/response payloads)")
+
+    # Langfuse (optional)
+    langfuse_enabled: bool = Field(default=False, description="Enable Langfuse observability")
+    langfuse_public_key: Optional[str] = Field(default=None, description="Langfuse public key")
+    langfuse_secret_key: Optional[str] = Field(default=None, description="Langfuse secret key")
+    langfuse_base_url: Optional[str] = Field(default=None, description="Langfuse base URL (cloud or self-hosted)")
+    langfuse_host: Optional[str] = Field(default=None, description="Deprecated alias for langfuse_base_url")
+    langfuse_tracing_enabled: Optional[bool] = Field(default=None, description="Override Langfuse tracing_enabled setting")
+    
+    @model_validator(mode='after')
+    def resolve_env_variables(self) -> 'Settings':
+        """Resolve ${VARIABLE} references in all string fields after loading."""
+        for field_name, field_value in self.__dict__.items():
+            if isinstance(field_value, str):
+                resolved = self._resolve_string(field_value)
+                setattr(self, field_name, resolved)
+        return self
+    
+    def _resolve_string(self, value: str) -> str:
+        """Resolve ${VAR} and $VAR references in a string."""
+        result = value
+        
+        # Match ${VAR_NAME}
+        pattern_braces = r'\$\{([^}]+)\}'
+        for var_name in re.findall(pattern_braces, result):
+            env_value = os.getenv(var_name, '')
+            if env_value:
+                result = result.replace(f'${{{var_name}}}', env_value)
+        
+        # Match $VAR_NAME
+        pattern_simple = r'\$([A-Za-z_][A-Za-z0-9_]*)'
+        for var_name in re.findall(pattern_simple, result):
+            env_value = os.getenv(var_name, '')
+            if env_value:
+                result = result.replace(f'${var_name}', env_value)
+        
+        return result
     
     class Config:
         env_file = ".env"

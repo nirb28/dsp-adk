@@ -12,11 +12,19 @@ from .api import agents_router, tools_router, mcp_servers_router, graphs_router,
 from .services.auth_service import get_auth_service
 from .services.telemetry_service import get_telemetry_service
 
-# Configure logging
+# Configure logging from settings
+settings = get_settings()
+log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=log_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    force=True
 )
+
+# Set log level for application loggers
+for logger_name in ['app', 'app.services', 'app.api']:
+    logging.getLogger(logger_name).setLevel(log_level)
+
 logger = logging.getLogger(__name__)
 
 
