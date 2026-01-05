@@ -1,0 +1,112 @@
+adapters: []
+agents: []
+allowed_groups: []
+allowed_roles: []
+checkpointer_config: {}
+created_at: '2026-01-04T22:14:23.607692Z'
+created_by: admin
+description: Research a topic and create a concise summary
+edges:
+- id: start_to_research
+  metadata: {}
+  source: START
+  target: research
+  type: normal
+- id: research_to_summarize
+  metadata: {}
+  source: research
+  target: summarize
+  type: normal
+- id: summarize_to_end
+  metadata: {}
+  source: summarize
+  target: END
+  type: normal
+id: research-summarize-graph
+jwt_required: true
+max_iterations: 25
+mcp_servers: []
+metadata:
+  author: system
+  tags:
+  - sequential
+  - research
+  - summary
+  version: 1.0.0
+name: Research and Summarize
+nodes:
+- adapters: []
+  config: {}
+  id: START
+  metadata: {}
+  name: Start Node
+  routes: {}
+  type: start
+- adapters: []
+  agent_id: research-agent
+  config:
+    max_sources: 3
+    output_format: detailed
+    research_depth: quick
+    source_types:
+    - web
+  description: Gathers information on the given topic
+  id: research
+  input_mapping:
+    query: $.topic
+  metadata: {}
+  name: Research Node
+  output_mapping:
+    research_results: $.response
+  routes: {}
+  type: agent
+- adapters: []
+  agent_id: conversational-assistant
+  config:
+    personality: professional
+    verbosity: concise
+  description: Creates a concise summary of research findings
+  id: summarize
+  input_mapping:
+    prompt: 'Please summarize the following research findings in a clear,
+
+      concise format with key points:
+
+
+      {{ research_results }}
+
+      '
+  metadata: {}
+  name: Summarize Node
+  output_mapping:
+    summary: $.response
+  routes: {}
+  type: agent
+- adapters: []
+  config: {}
+  id: END
+  metadata: {}
+  name: End Node
+  routes: {}
+  type: end
+state_schema:
+  fields: {}
+  properties:
+    research_results:
+      description: Raw research findings from the research agent
+      type: string
+    summary:
+      description: Final summarized output
+      type: string
+    topic:
+      description: The topic to research
+      type: string
+  required:
+  - topic
+  type: object
+streaming: true
+tags: []
+timeout: 300
+tools: []
+type: langgraph
+updated_at: '2026-01-04T22:14:23.607692Z'

@@ -5,16 +5,21 @@ Demonstrates an AI agent that retrieves information from knowledge bases
 using the RAG retrieval tool connected to dsp-rag service.
 """
 import asyncio
+import json
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.services.agent_executor import AgentExecutor
-from app.core.config import load_config
+# Load environment variables from .env file
+env_path = project_root / '.env'
+load_dotenv(dotenv_path=env_path)
+
+import httpx
 
 
 async def run_interactive_demo():
@@ -27,31 +32,41 @@ async def run_interactive_demo():
     print("It connects to dsp-rag service to search document collections.\n")
     
     # Check environment variables
-    rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:8000')
+    rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:9000')
     print(f"RAG Endpoint: {rag_endpoint}")
     
-    api_key = os.getenv('NVAPI_KEY') or os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv('NVIDIA_API_KEY') or os.getenv('LLM_API_KEY') or os.getenv('OPENAI_API_KEY')
     if not api_key:
         print("⚠️  No API key found!")
-        print("Please set NVAPI_KEY or OPENAI_API_KEY environment variable")
+        print("Please set NVIDIA_API_KEY, LLM_API_KEY, or OPENAI_API_KEY environment variable")
         return
     
     print("✓ API key configured\n")
     
-    # Load configuration
-    config = load_config()
+    # ADK API endpoint
+    adk_endpoint = os.getenv('ADK_ENDPOINT', 'http://localhost:8100')
+    agent_id = "knowledge-assistant-agent"
     
-    # Initialize agent executor
-    executor = AgentExecutor(config)
-    
-    # Load agent
-    agent_id = "knowledge-assistant"
-    try:
-        agent = await executor.load_agent(agent_id)
-        print(f"✓ Agent loaded: {agent.name}\n")
-    except Exception as e:
-        print(f"❌ Failed to load agent: {e}")
-        return
+    # Verify agent exists
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{adk_endpoint}/agents/{agent_id}")
+            if response.status_code == 404:
+                print(f"❌ Agent '{agent_id}' not found")
+                # List available agents
+                list_response = await client.get(f"{adk_endpoint}/agents")
+                if list_response.status_code == 200:
+                    agents_data = list_response.json()
+                    print("\nAvailable agents:")
+                    for agent in agents_data.get('agents', []):
+                        print(f"  - {agent['id']}: {agent['name']}")
+                return
+            response.raise_for_status()
+            agent_data = response.json()
+            print(f"✓ Agent loaded: {agent_data['agent']['name']}\n")
+        except httpx.HTTPError as e:
+            print(f"❌ Error connecting to ADK API: {e}")
+            return
     
     print("="*70)
     print("EXAMPLE QUESTIONS:")
@@ -113,34 +128,30 @@ Type 'configs' to see available knowledge base configurations.
             # Execute agent
             print("\nAgent: ", end="", flush=True)
             
-            response = await executor.execute_agent(
-                agent_id=agent_id,
-                user_message=user_input,
-                conversation_id=conversation_id,
-                stream=True
-            )
-            
-            # Handle streaming response
-            full_response = ""
-            tool_calls = []
-            
-            async for chunk in response:
-                if chunk.get('type') == 'content':
-                    content = chunk.get('content', '')
-                    print(content, end="", flush=True)
-                    full_response += content
-                elif chunk.get('type') == 'tool_call':
-                    tool_name = chunk.get('tool_name', 'unknown')
-                    tool_calls.append(tool_name)
-                    print(f"\n[Searching knowledge base...]", flush=True)
-                elif chunk.get('type') == 'tool_result':
-                    result = chunk.get('result', {})
-                    if result.get('success'):
-                        chunks_found = result.get('total_chunks', 0)
-                        config_used = result.get('configuration_name', 'unknown')
-                        print(f"[Found {chunks_found} relevant chunks in '{config_used}']", flush=True)
-                elif chunk.get('type') == 'error':
-                    print(f"\n❌ Error: {chunk.get('error', 'Unknown error')}")
+            try:
+                # Call ADK agent execution API
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    payload = {
+                        "message": user_input,
+                        "stream": False,
+                        "use_tools": True
+                    }
+                    
+                    response = await client.post(
+                        f"{adk_endpoint}/agents/{agent_id}/run",
+                        json=payload
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        print(result.get('response', '[No response]'), flush=True)
+                    else:
+                        print(f"❌ API Error {response.status_code}: {response.text}")
+                    
+            except httpx.TimeoutException:
+                print("\n❌ Request timed out. The LLM is taking too long to respond.")
+            except Exception as e:
+                print(f"\n❌ Error during execution: {e}")
             
             print("\n")
             
@@ -160,21 +171,23 @@ async def run_automated_demo():
     print()
     
     # Check RAG endpoint
-    rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:8000')
+    rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:9000')
     print(f"RAG Endpoint: {rag_endpoint}\n")
     
-    # Load configuration
-    config = load_config()
-    executor = AgentExecutor(config)
+    # ADK API endpoint
+    adk_endpoint = os.getenv('ADK_ENDPOINT', 'http://localhost:8100')
+    agent_id = "knowledge-assistant-agent"
     
-    # Load agent
-    agent_id = "knowledge-assistant"
-    try:
-        agent = await executor.load_agent(agent_id)
-        print(f"✓ Agent loaded: {agent.name}\n")
-    except Exception as e:
-        print(f"❌ Failed to load agent: {e}")
-        return
+    # Verify agent exists
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{adk_endpoint}/agents/{agent_id}")
+            response.raise_for_status()
+            agent_data = response.json()
+            print(f"✓ Agent loaded: {agent_data['agent']['name']}\n")
+        except httpx.HTTPError as e:
+            print(f"❌ Error: {e}")
+            return
     
     # Predefined questions
     questions = [
@@ -194,29 +207,24 @@ async def run_automated_demo():
         print("Agent: ", end="", flush=True)
         
         try:
-            response = await executor.execute_agent(
-                agent_id=agent_id,
-                user_message=question,
-                conversation_id=conversation_id,
-                stream=True
-            )
-            
-            # Collect response
-            full_response = ""
-            chunks_found = 0
-            
-            async for chunk in response:
-                if chunk.get('type') == 'content':
-                    content = chunk.get('content', '')
-                    print(content, end="", flush=True)
-                    full_response += content
-                elif chunk.get('type') == 'tool_call':
-                    print(f"\n[Searching knowledge base...]", flush=True)
-                elif chunk.get('type') == 'tool_result':
-                    result = chunk.get('result', {})
-                    if result.get('success'):
-                        chunks_found = result.get('total_chunks', 0)
-                        print(f"[Found {chunks_found} relevant chunks]", flush=True)
+            # Call ADK agent execution API
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                payload = {
+                    "message": question,
+                    "stream": False,
+                    "use_tools": True
+                }
+                
+                response = await client.post(
+                    f"{adk_endpoint}/agents/{agent_id}/run",
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(result.get('response', '[No response]'), flush=True)
+                else:
+                    print(f"❌ API Error {response.status_code}: {response.text}")
             
             print("\n")
             
@@ -240,50 +248,56 @@ async def test_rag_tool_directly():
     print("="*70)
     print()
     
-    from app.services.tool_service import ToolService
-    from app.core.config import load_config
-    
-    config = load_config()
-    tool_service = ToolService(config)
-    
-    # Load tool
+    # ADK API endpoint
+    adk_endpoint = os.getenv('ADK_ENDPOINT', 'http://localhost:8100')
     tool_id = "rag-retrieval"
-    try:
-        tool = await tool_service.load_tool(tool_id)
-        print(f"✓ Tool loaded: {tool.name}\n")
-    except Exception as e:
-        print(f"❌ Failed to load tool: {e}")
-        return
+    
+    # Verify tool exists
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{adk_endpoint}/tools/{tool_id}")
+            response.raise_for_status()
+            tool_data = response.json()
+            print(f"✓ Tool loaded: {tool_data['tool']['name']}\n")
+        except httpx.HTTPError as e:
+            print(f"❌ Error: {e}")
+            return
     
     # Test 1: Basic retrieval
     print("Test 1: Basic Document Retrieval")
     print("-" * 70)
     
-    result = await tool_service.execute_tool(
-        tool_id=tool_id,
-        parameters={
-            "query": "What is machine learning?",
-            "configuration_name": "default",
-            "top_k": 5,
-            "use_reranking": True
-        }
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{adk_endpoint}/tools/{tool_id}/execute",
+            json={
+                "arguments": {
+                    "query": "What is machine learning?",
+                    "configuration_name": "batch_ml_ai_basics_test",
+                    "k": 5,
+                    "use_reranking": True
+                }
+            }
+        )
+        response.raise_for_status()
+        result = json.loads(response.text)
     
-    print(f"Success: {result.get('success')}")
-    if result.get('success'):
+    if 'error' in result:
+        print(f"Error: {result.get('error')}")
+    elif 'documents' in result:
         print(f"Query: {result.get('query')}")
         print(f"Configuration: {result.get('configuration_name')}")
-        print(f"Chunks found: {result.get('total_chunks')}")
+        print(f"Documents found: {result.get('total_found', len(result['documents']))}")
         
-        print("\nRetrieved chunks:")
-        for i, chunk in enumerate(result.get('chunks', [])[:3], 1):
-            print(f"\n  Chunk {i}:")
-            print(f"    Score: {chunk.get('score', 0):.4f}")
-            print(f"    Content: {chunk.get('content', '')[:200]}...")
-            if chunk.get('metadata'):
-                print(f"    Metadata: {chunk.get('metadata')}")
+        print("\nRetrieved documents:")
+        for i, doc in enumerate(result.get('documents', [])[:3], 1):
+            print(f"\n  Document {i}:")
+            content = doc.get('page_content', doc.get('content', ''))
+            print(f"    Content: {content[:200]}...")
+            if doc.get('metadata'):
+                print(f"    Metadata: {doc.get('metadata')}")
     else:
-        print(f"Error: {result.get('error')}")
+        print(f"Unexpected result format: {result}")
     
     print()
     
@@ -291,23 +305,29 @@ async def test_rag_tool_directly():
     print("Test 2: Retrieval with Metadata Filter")
     print("-" * 70)
     
-    result = await tool_service.execute_tool(
-        tool_id=tool_id,
-        parameters={
-            "query": "API configuration",
-            "configuration_name": "technical_docs",
-            "top_k": 3,
-            "use_reranking": True,
-            "metadata_filter": {"category": "api"}
-        }
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{adk_endpoint}/tools/{tool_id}/execute",
+            json={
+                "arguments": {
+                    "query": "API configuration",
+                    "configuration_name": "batch_ml_ai_basics_test",
+                    "k": 3,
+                    "use_reranking": True,
+                    "filter": {"category": "api"}
+                }
+            }
+        )
+        response.raise_for_status()
+        result = json.loads(response.text)
     
-    print(f"Success: {result.get('success')}")
-    if result.get('success'):
-        print(f"Chunks found: {result.get('total_chunks')}")
+    if 'error' in result:
+        print(f"Error: {result.get('error')}")
+    elif 'documents' in result:
+        print(f"Documents found: {result.get('total_found', len(result['documents']))}")
         print(f"Filter applied: category=api")
     else:
-        print(f"Error: {result.get('error')}")
+        print(f"Unexpected result: {result}")
     
     print()
     
@@ -315,21 +335,27 @@ async def test_rag_tool_directly():
     print("Test 3: Different Knowledge Base Configuration")
     print("-" * 70)
     
-    result = await tool_service.execute_tool(
-        tool_id=tool_id,
-        parameters={
-            "query": "How to reset password?",
-            "configuration_name": "customer_support",
-            "top_k": 5
-        }
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{adk_endpoint}/tools/{tool_id}/execute",
+            json={
+                "arguments": {
+                    "query": "How to reset password?",
+                    "configuration_name": "batch_ml_ai_basics_test",
+                    "k": 5
+                }
+            }
+        )
+        response.raise_for_status()
+        result = json.loads(response.text)
     
-    print(f"Success: {result.get('success')}")
-    if result.get('success'):
-        print(f"Configuration: {result.get('configuration_name')}")
-        print(f"Chunks found: {result.get('total_chunks')}")
-    else:
+    if 'error' in result:
         print(f"Error: {result.get('error')}")
+    elif 'documents' in result:
+        print(f"Configuration: {result.get('configuration_name')}")
+        print(f"Documents found: {result.get('total_found', len(result['documents']))}")
+    else:
+        print(f"Unexpected result: {result}")
     
     print("\n" + "="*70)
 
@@ -347,8 +373,8 @@ def main():
     )
     parser.add_argument(
         '--rag-endpoint',
-        default='http://localhost:8000',
-        help='RAG service endpoint (default: http://localhost:8000)'
+        default='http://localhost:9000',
+        help='RAG service endpoint (default: http://localhost:9000)'
     )
     
     args = parser.parse_args()

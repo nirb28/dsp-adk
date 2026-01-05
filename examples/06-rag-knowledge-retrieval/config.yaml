@@ -22,15 +22,15 @@ rag:
       description: Technical documentation
     - name: customer_support
       description: Customer support articles
-    - name: product_info
-      description: Product information
+    - name: batch_ml_ai_basics_test
+      description: Machine Learning AI Knowledge, Computer Vision
 
 # LLM configuration
 llm:
   provider: openai_compatible
   model: meta/llama-3.3-70b-instruct
   endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: NVAPI_KEY
+  api_key_env: LLM_API_KEY
   temperature: 0.7
   max_tokens: 2000
 

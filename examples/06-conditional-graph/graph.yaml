@@ -3,10 +3,14 @@
 
 id: support-router-graph
 name: Customer Support Router
-type: conditional
+type: langgraph
 description: Routes customer requests to specialized support agents
 
 nodes:
+  - id: START
+    name: Start
+    type: start
+
   - id: classify
     name: Request Classifier
     type: agent
@@ -73,35 +77,48 @@ nodes:
     output_mapping:
       response: "$.response"
 
+  - id: END
+    name: End
+    type: end
+
 edges:
   - source: START
     target: classify
+    id: start_to_classify
+    type: normal
     
   - source: classify
     target: technical-support
-    condition:
-      type: expression
-      expression: "state.category.strip().lower() == 'technical'"
+    id: classify_to_technical
+    type: conditional
+    condition: "state.category.strip().lower() == 'technical'"
       
   - source: classify
     target: research-support
-    condition:
-      type: expression
-      expression: "state.category.strip().lower() == 'research'"
+    id: classify_to_research
+    type: conditional
+    condition: "state.category.strip().lower() == 'research'"
       
   - source: classify
     target: general-support
-    condition:
-      type: default
+    id: classify_to_general
+    type: conditional
+    condition: "default"
       
   - source: technical-support
     target: END
+    id: technical_to_end
+    type: normal
     
   - source: research-support
     target: END
+    id: research_to_end
+    type: normal
     
   - source: general-support
     target: END
+    id: general_to_end
+    type: normal
 
 state_schema:
   type: object

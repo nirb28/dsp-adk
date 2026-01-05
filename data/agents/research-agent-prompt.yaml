@@ -1,0 +1,43 @@
+agent_type: conversational
+allowed_groups: []
+allowed_roles: []
+capabilities: []
+component_type: agent
+created_at: '2026-01-04T22:35:02.074904Z'
+created_by: admin
+dependencies: []
+description: Agent using research methodology as prompt extension
+enabled: true
+id: research-agent-prompt
+jwt_required: false
+llm:
+  api_key: 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
+  endpoint: https://integrate.api.nvidia.com/v1
+  max_tokens: 2048
+  model: openai/gpt-oss-120b
+  provider: nvidia
+  system_prompt: You are a research assistant.
+  temperature: 0.3
+mcp_servers: []
+memory:
+  enabled: false
+  max_tokens: 4000
+  persistence: false
+  type: buffer
+metadata: {}
+name: Research Agent (Prompt Extension)
+skills:
+- application_modes:
+  - system_prompt_extension
+  enabled: true
+  parameters:
+    require_citations: true
+    research_depth: standard
+    source_types: academic, news
+  priority: 0
+  skill_id: research-methodology
+status: draft
+tags: []
+tools: []
+updated_at: '2026-01-04T22:35:02.074904Z'
+version: 1.0.0

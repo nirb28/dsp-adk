@@ -318,12 +318,48 @@ class AgentExecutor:
         else:
             return json.dumps({"result": "Tool executed successfully (mock)"})
     
-    def _substitute_template_vars(self, template: str, arguments: Dict[str, Any]) -> str:
+    def _substitute_template_vars(self, template: str, arguments: Dict[str, Any], tool: Optional[ToolConfig] = None) -> str:
         """Substitute {{variable}} placeholders in template strings."""
+        import re
+        
         result = template
+        
+        # First pass: substitute provided arguments
         for key, value in arguments.items():
             placeholder = f"{{{{{key}}}}}"
-            result = result.replace(placeholder, str(value))
+            # Handle JSON serialization for complex types
+            if value is None:
+                result = result.replace(placeholder, "null")
+            elif isinstance(value, bool):
+                result = result.replace(placeholder, "true" if value else "false")
+            elif isinstance(value, (dict, list)):
+                result = result.replace(placeholder, json.dumps(value))
+            elif isinstance(value, str):
+                # Don't quote strings - let the template handle quoting
+                result = result.replace(placeholder, value)
+            else:
+                result = result.replace(placeholder, str(value))
+        
+        # Second pass: handle remaining placeholders with defaults from tool parameters
+        if tool:
+            remaining_placeholders = re.findall(r'\{\{(\w+)\}\}', result)
+            for param_name in remaining_placeholders:
+                # Find parameter definition in tool config
+                param_def = next((p for p in tool.parameters if p.name == param_name), None)
+                if param_def and param_def.default is not None:
+                    placeholder = f"{{{{{param_name}}}}}"
+                    default_value = param_def.default
+                    if default_value is None:
+                        result = result.replace(placeholder, "null")
+                    elif isinstance(default_value, bool):
+                        result = result.replace(placeholder, "true" if default_value else "false")
+                    elif isinstance(default_value, (dict, list)):
+                        result = result.replace(placeholder, json.dumps(default_value))
+                    elif isinstance(default_value, str):
+                        result = result.replace(placeholder, default_value)
+                    else:
+                        result = result.replace(placeholder, str(default_value))
+        
         return result
     
     async def _execute_api_tool(self, tool: ToolConfig, arguments: Dict[str, Any]) -> str:
@@ -340,30 +376,57 @@ class AgentExecutor:
             return json.dumps({"error": "No endpoint configured for API tool"})
         
         # Substitute template variables in endpoint
-        endpoint = self._substitute_template_vars(endpoint, arguments)
+        endpoint = self._substitute_template_vars(endpoint, arguments, tool)
         logger.debug(f"[TOOL_EXEC:API] Resolved endpoint: {endpoint}")
         
         # Build headers
         headers = {}
         if "headers" in impl:
             for key, value in impl["headers"].items():
-                headers[key] = self._substitute_template_vars(str(value), arguments)
+                headers[key] = self._substitute_template_vars(str(value), arguments, tool)
         
         # Build query parameters
         params = {}
         if "query_params" in impl:
             for key, value in impl["query_params"].items():
-                params[key] = self._substitute_template_vars(str(value), arguments)
+                params[key] = self._substitute_template_vars(str(value), arguments, tool)
         
         # Build request body
         body = None
-        if "body" in impl:
-            if isinstance(impl["body"], dict):
+        # Check for both "body" and "body_template" keys
+        body_source = impl.get("body_template") or impl.get("body")
+        if body_source:
+            if isinstance(body_source, dict):
                 body = {}
-                for key, value in impl["body"].items():
-                    body[key] = self._substitute_template_vars(str(value), arguments)
+                for key, value in body_source.items():
+                    body[key] = self._substitute_template_vars(str(value), arguments, tool)
+            elif isinstance(body_source, str):
+                # Handle string templates - substitute vars then parse as JSON
+                body_str = self._substitute_template_vars(body_source, arguments, tool)
+                
+                # Remove lines with unsubstituted placeholders (optional parameters not provided)
+                import re
+                lines = body_str.split('\n')
+                filtered_lines = []
+                for line in lines:
+                    # Check if line contains unsubstituted placeholder
+                    if re.search(r'\{\{[^}]+\}\}', line):
+                        # Skip this line - it has an unsubstituted placeholder
+                        continue
+                    filtered_lines.append(line)
+                
+                # Rejoin and clean up trailing commas before closing braces/brackets
+                body_str = '\n'.join(filtered_lines)
+                body_str = re.sub(r',(\s*[}\]])', r'\1', body_str)
+                
+                try:
+                    body = json.loads(body_str)
+                except json.JSONDecodeError as e:
+                    logger.error(f"[TOOL_EXEC:API] Failed to parse body_template as JSON: {e}")
+                    logger.debug(f"[TOOL_EXEC:API] Body string was: {body_str}")
+                    return json.dumps({"error": f"Invalid JSON in body_template: {str(e)}"})
             else:
-                body = self._substitute_template_vars(str(impl["body"]), arguments)
+                body = self._substitute_template_vars(str(body_source), arguments, tool)
         
         # Make HTTP request
         timeout = tool.timeout or 30

@@ -3,10 +3,14 @@
 
 id: research-summarize-graph
 name: Research and Summarize
-type: sequential
+type: langgraph
 description: Research a topic and create a concise summary
 
 nodes:
+  - id: START
+    name: Start Node
+    type: start
+    
   - id: research
     name: Research Node
     type: agent
@@ -39,16 +43,26 @@ nodes:
         {{ research_results }}
     output_mapping:
       summary: "$.response"
+  
+  - id: END
+    name: End Node
+    type: end
 
 edges:
-  - source: START
+  - id: start_to_research
+    source: START
     target: research
+    type: normal
     
-  - source: research
+  - id: research_to_summarize
+    source: research
     target: summarize
+    type: normal
     
-  - source: summarize
+  - id: summarize_to_end
+    source: summarize
     target: END
+    type: normal
 
 state_schema:
   type: object

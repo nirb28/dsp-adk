@@ -1,0 +1,61 @@
+agent_type: conversational
+allowed_groups: []
+allowed_roles: []
+capabilities: []
+component_type: agent
+created_at: '2026-01-04T22:35:29.250315Z'
+created_by: admin
+dependencies: []
+description: Agent with multiple skills applied in priority order
+enabled: true
+id: advanced-research-agent
+jwt_required: false
+llm:
+  api_key: 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
+  endpoint: https://integrate.api.nvidia.com/v1
+  max_tokens: 3072
+  model: openai/gpt-oss-120b
+  provider: nvidia
+  system_prompt: You are an expert research analyst.
+  temperature: 0.3
+mcp_servers: []
+memory:
+  enabled: false
+  max_tokens: 4000
+  persistence: false
+  type: buffer
+metadata: {}
+name: Advanced Research Agent
+skills:
+- application_modes:
+  - context_injection
+  - system_prompt_extension
+  enabled: true
+  parameters:
+    require_citations: true
+    research_depth: comprehensive
+    source_types: academic, peer-reviewed, industry reports
+  priority: 10
+  skill_id: research-methodology
+- application_modes:
+  - system_prompt_extension
+  enabled: true
+  parameters:
+    detail_level: comprehensive
+    include_sources: true
+    output_structure: hierarchical
+  priority: 5
+  skill_id: information-synthesis
+- application_modes:
+  - orchestration_step
+  enabled: true
+  parameters:
+    max_depth: 2
+    output_format: tree
+  priority: 0
+  skill_id: task-decomposition
+status: draft
+tags: []
+tools: []
+updated_at: '2026-01-04T22:35:29.250315Z'
+version: 1.0.0

@@ -1,0 +1,42 @@
+agent_type: conversational
+allowed_groups: []
+allowed_roles: []
+capabilities: []
+component_type: agent
+created_at: '2026-01-04T22:35:12.788645Z'
+created_by: admin
+dependencies: []
+description: Agent using code generation with few-shot examples
+enabled: true
+id: coding-agent-examples
+jwt_required: false
+llm:
+  api_key: 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
+  endpoint: https://integrate.api.nvidia.com/v1
+  max_tokens: 1024
+  model: openai/gpt-oss-120b
+  provider: nvidia
+  system_prompt: You are a Python coding expert.
+  temperature: 0.7
+mcp_servers: []
+memory:
+  enabled: false
+  max_tokens: 4000
+  persistence: false
+  type: buffer
+metadata: {}
+name: Coding Agent (Few-Shot)
+skills:
+- application_modes:
+  - system_prompt_extension
+  - few_shot_examples
+  enabled: true
+  parameters:
+    language: python
+  priority: 0
+  skill_id: code-generation
+status: draft
+tags: []
+tools: []
+updated_at: '2026-01-04T22:35:12.788645Z'
+version: 1.0.0

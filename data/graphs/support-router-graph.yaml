@@ -1,0 +1,181 @@
+adapters: []
+agents: []
+allowed_groups: []
+allowed_roles: []
+checkpointer_config: {}
+created_at: '2026-01-04T22:40:24.305916Z'
+created_by: admin
+description: Routes customer requests to specialized support agents
+edges:
+- id: start_to_classify
+  metadata: {}
+  source: START
+  target: classify
+  type: normal
+- condition: state.category.strip().lower() == 'technical'
+  id: classify_to_technical
+  metadata: {}
+  source: classify
+  target: technical-support
+  type: conditional
+- condition: state.category.strip().lower() == 'research'
+  id: classify_to_research
+  metadata: {}
+  source: classify
+  target: research-support
+  type: conditional
+- condition: default
+  id: classify_to_general
+  metadata: {}
+  source: classify
+  target: general-support
+  type: conditional
+- id: technical_to_end
+  metadata: {}
+  source: technical-support
+  target: END
+  type: normal
+- id: research_to_end
+  metadata: {}
+  source: research-support
+  target: END
+  type: normal
+- id: general_to_end
+  metadata: {}
+  source: general-support
+  target: END
+  type: normal
+id: support-router-graph
+jwt_required: true
+max_iterations: 25
+mcp_servers: []
+metadata:
+  author: system
+  tags:
+  - conditional
+  - routing
+  - support
+  - classification
+  version: 1.0.0
+name: Customer Support Router
+nodes:
+- adapters: []
+  config: {}
+  id: START
+  metadata: {}
+  name: Start
+  routes: {}
+  type: start
+- adapters: []
+  agent_id: conversational-assistant
+  config:
+    personality: professional
+    verbosity: concise
+  description: Classifies incoming support requests
+  id: classify
+  metadata: {}
+  name: Request Classifier
+  output_mapping:
+    category: $.response
+  routes: {}
+  system_prompt_override: 'You are a support request classifier. Analyze the user''s
+    message
+
+    and classify it into exactly one of these categories:
+
+    - technical: coding, errors, bugs, API issues, integration problems
+
+    - research: questions needing investigation, comparisons, analysis
+
+    - general: account issues, policies, general inquiries
+
+
+    Respond with ONLY the category name (technical, research, or general).
+
+    '
+  type: agent
+- adapters: []
+  agent_id: code-assistant
+  config:
+    include_docs: true
+    languages:
+    - python
+    - javascript
+    security_check: true
+  description: Handles technical and coding issues
+  id: technical-support
+  input_mapping:
+    query: $.original_request
+  metadata: {}
+  name: Technical Support Agent
+  output_mapping:
+    response: $.response
+  routes: {}
+  tools:
+  - file-operations
+  type: agent
+- adapters: []
+  agent_id: research-agent
+  config:
+    include_citations: true
+    research_depth: standard
+  description: Handles research and investigation requests
+  id: research-support
+  input_mapping:
+    query: $.original_request
+  metadata: {}
+  name: Research Support Agent
+  output_mapping:
+    response: $.response
+  routes: {}
+  tools:
+  - web-search
+  - text-processor
+  type: agent
+- adapters: []
+  agent_id: conversational-assistant
+  config:
+    personality: friendly
+    verbosity: balanced
+  description: Handles general support inquiries
+  id: general-support
+  input_mapping:
+    query: $.original_request
+  metadata: {}
+  name: General Support Agent
+  output_mapping:
+    response: $.response
+  routes: {}
+  type: agent
+- adapters: []
+  config: {}
+  id: END
+  metadata: {}
+  name: End
+  routes: {}
+  type: end
+state_schema:
+  fields: {}
+  properties:
+    category:
+      description: Classified category of the request
+      enum:
+      - technical
+      - research
+      - general
+      type: string
+    original_request:
+      description: The original user request
+      type: string
+    response:
+      description: Final response from the appropriate agent
+      type: string
+  required:
+  - original_request
+  type: object
+streaming: true
+tags: []
+timeout: 300
+tools: []
+type: langgraph
+updated_at: '2026-01-04T22:40:24.305916Z'

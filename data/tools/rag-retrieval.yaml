@@ -16,12 +16,18 @@ usage_instructions: |
   The tool connects to a RAG service (like dsp-rag) that uses vector similarity search
   to find the most relevant document chunks for your query.
   
-  Parameters:
-  - query: Your search question or keywords
-  - configuration_name: Which RAG configuration/collection to search
-  - top_k: Number of results to return (default: 5)
-  - use_reranking: Whether to rerank results for better relevance
-  - metadata_filter: Filter documents by metadata (optional)
+  Key Parameters:
+  - query: Your search question or keywords (required)
+  - configuration_name: Which RAG configuration/collection to search (default: "default")
+  - configuration_names: List of configurations for multi-config retrieval
+  - k: Number of results to return (default: 5)
+  - similarity_threshold: Minimum similarity score to filter results (0.0-1.0)
+  - use_reranking: Whether to rerank results for better relevance (default: false)
+  - filter: LangChain-style metadata filter for document filtering
+  - filter_after_reranking: Apply threshold filtering after reranking (default: true)
+  - include_metadata: Include document metadata in results (default: true)
+  - query_expansion: Optional query expansion configuration
+  - debug: Enable detailed logging (default: false)
 
 parameters:
   - name: query
@@ -35,28 +41,78 @@ parameters:
     required: false
     default: default
     
-  - name: top_k
+  - name: configuration_names
+    type: array
+    description: List of configuration names for multi-configuration retrieval
+    required: false
+    
+  - name: k
     type: integer
     description: Number of document chunks to retrieve
     required: false
     default: 5
     
+  - name: similarity_threshold
+    type: number
+    description: Minimum similarity score threshold (0.0-1.0)
+    required: false
+    
+  - name: include_metadata
+    type: boolean
+    description: Whether to include document metadata in results
+    required: false
+    default: true
+    
   - name: use_reranking
     type: boolean
     description: Whether to use reranking for better relevance
     required: false
+    default: false
+    
+  - name: include_vectors
+    type: boolean
+    description: Whether to include document vectors in results
+    required: false
+    default: false
+    
+  - name: config
+    type: object
+    description: Optional partial configuration overrides
+    required: false
+    
+  - name: fusion_method
+    type: string
+    description: 'Fusion method for multi-query results: "rrf" or "simple"'
+    required: false
+    default: rrf
+    
+  - name: rrf_k_constant
+    type: integer
+    description: Constant for RRF (Reciprocal Rank Fusion) calculation
+    required: false
+    default: 60
+    
+  - name: filter_after_reranking
+    type: boolean
+    description: Whether to apply score threshold filtering after reranking
+    required: false
     default: true
     
-  - name: metadata_filter
+  - name: query_expansion
     type: object
-    description: Filter documents by metadata (e.g., {"source": "manual", "category": "technical"})
+    description: Optional query expansion configuration
     required: false
     
-  - name: min_score
-    type: number
-    description: Minimum similarity score threshold (0.0-1.0)
+  - name: filter
+    type: object
+    description: 'LangChain-style metadata filter (e.g., {"source": "manual", "category": "technical"})'
     required: false
-    default: 0.0
+    
+  - name: debug
+    type: boolean
+    description: Whether to log detailed request and response payloads for debugging
+    required: false
+    default: false
 
 returns:
   type: object
@@ -87,7 +143,7 @@ implementation:
   type: api
   
   # RAG service endpoint configuration
-  endpoint: ${RAG_ENDPOINT:http://localhost:8000}/retrieve
+  endpoint: ${RAG_ENDPOINT:http://localhost:9000}/api/v1/retrieve
   method: POST
   
   headers:
@@ -101,10 +157,19 @@ implementation:
     {
       "query": "{{query}}",
       "configuration_name": "{{configuration_name}}",
-      "top_k": {{top_k}},
+      "configuration_names": {{configuration_names}},
+      "k": {{k}},
+      "similarity_threshold": {{similarity_threshold}},
+      "include_metadata": {{include_metadata}},
       "use_reranking": {{use_reranking}},
-      "metadata_filter": {{metadata_filter}},
-      "min_score": {{min_score}}
+      "include_vectors": {{include_vectors}},
+      "config": {{config}},
+      "fusion_method": "{{fusion_method}}",
+      "rrf_k_constant": {{rrf_k_constant}},
+      "filter_after_reranking": {{filter_after_reranking}},
+      "query_expansion": {{query_expansion}},
+      "filter": {{filter}},
+      "debug": {{debug}}
     }
   
   # Response mapping
@@ -122,23 +187,23 @@ implementation:
   # RAG service configurations
   rag_configs:
     default:
-      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      endpoint: ${RAG_ENDPOINT:http://localhost:9000}
       description: Default RAG configuration
       
     technical_docs:
-      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      endpoint: ${RAG_ENDPOINT:http://localhost:9000}
       configuration_name: technical-docs
       description: Technical documentation knowledge base
       
     customer_support:
-      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
+      endpoint: ${RAG_ENDPOINT:http://localhost:9000}
       configuration_name: customer-support
       description: Customer support knowledge base
       
-    product_info:
-      endpoint: ${RAG_ENDPOINT:http://localhost:8000}
-      configuration_name: product-info
-      description: Product information and specifications
+    batch_ml_ai_basics_test:
+      endpoint: ${RAG_ENDPOINT:http://localhost:9000}
+      configuration_name: batch_ml_ai_basics_test
+      description: ML AI Basics knowledge base, computer vision
 
 jwt_required: false
 allowed_groups: []

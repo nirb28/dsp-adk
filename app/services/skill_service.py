@@ -322,7 +322,7 @@ class SkillService:
                     skill, updated_messages, parameters
                 )
         
-        logger.info(f"Applied skill '{skill.id}' with modes: {[m.value for m in application_modes]}")
+        logger.info(f"Applied skill '{skill.id}' with modes: {[m.value if hasattr(m, 'value') else m for m in application_modes]}")
         return updated_prompt, updated_messages
     
     def load_and_apply_skills(
