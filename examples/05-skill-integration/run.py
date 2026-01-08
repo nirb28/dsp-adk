@@ -157,7 +157,7 @@ async def example_3_few_shot_examples(client: httpx.AsyncClient):
             provider=os.getenv("LLM_PROVIDER", "nvidia"),
             model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             endpoint=os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            api_key_env="LLM_API_KEY",
+            api_key=os.getenv("LLM_API_KEY"),
             temperature=0.7,
             max_tokens=1024,
             system_prompt="You are a Python coding expert."
@@ -205,7 +205,7 @@ async def example_4_orchestration_steps(client: httpx.AsyncClient):
             provider=os.getenv("LLM_PROVIDER", "nvidia"),
             model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             endpoint=os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            api_key_env="LLM_API_KEY",
+            api_key=os.getenv("LLM_API_KEY"),
             temperature=0.5,
             max_tokens=2048,
             system_prompt="You are a project planning expert."
@@ -254,7 +254,7 @@ async def example_5_multiple_skills(client: httpx.AsyncClient):
             provider=os.getenv("LLM_PROVIDER", "nvidia"),
             model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             endpoint=os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            api_key_env="LLM_API_KEY",
+            api_key=os.getenv("LLM_API_KEY"),
             temperature=0.3,
             max_tokens=3072,
             system_prompt="You are an expert research analyst."

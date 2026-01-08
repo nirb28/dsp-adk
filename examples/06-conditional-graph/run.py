@@ -138,13 +138,7 @@ async def main():
         llm_model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
         llm_endpoint = os.getenv("LLM_ENDPOINT") or os.getenv("NVIDIA_ENDPOINT", "https://integrate.api.nvidia.com/v1")
 
-        llm_api_key_raw = os.getenv("LLM_API_KEY", "")
-        if llm_api_key_raw.startswith("${") and llm_api_key_raw.endswith("}"):
-            llm_api_key = os.getenv(llm_api_key_raw[2:-1])
-        else:
-            llm_api_key = llm_api_key_raw
-        if not llm_api_key:
-            llm_api_key = os.getenv("NVIDIA_API_KEY") or os.getenv("GROQ_API_KEY")
+        llm_api_key = os.getenv("LLM_API_KEY", "")
         if not llm_api_key:
             print("   ✗ No LLM API key found")
             return

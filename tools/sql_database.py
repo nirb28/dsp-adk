@@ -172,8 +172,7 @@ SQL Query:"""
         provider = self.llm_config.get('provider', 'openai_compatible')
         endpoint = self.llm_config.get('endpoint', '')
         model = self.llm_config.get('model', 'gpt-3.5-turbo')
-        api_key_env = self.llm_config.get('api_key_env', 'OPENAI_API_KEY')
-        api_key = os.getenv(api_key_env, '')
+        api_key = self.llm_config.get('api_key', '')
         
         if not endpoint:
             raise ValueError("LLM endpoint not configured")

@@ -12,7 +12,7 @@ endpoint: https://api.example.com
 
 ### 2. `${VAR_NAME}` Syntax (Braces)
 ```yaml
-api_key: ${NVIDIA_API_KEY}
+api_key: ${LLM_API_KEY}
 model: ${LLM_MODEL}
 ```
 
@@ -54,8 +54,7 @@ endpoint: https://api.search.brave.com/res/v1/web/search
 
 ```bash
 # .env file
-NVIDIA_API_KEY=nvapi-your-key-here
-LLM_API_KEY_ENV=NVIDIA_API_KEY
+LLM_API_KEY=nvapi-your-key-here
 ```
 
 In agent configuration:
@@ -65,7 +64,7 @@ llm:
   provider: nvidia
   model: meta/llama-3.1-70b-instruct
   endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: $LLM_API_KEY_ENV  # References NVIDIA_API_KEY
+  api_key: ${LLM_API_KEY}
 ```
 
 ### 3. Dynamic Configuration
@@ -121,7 +120,7 @@ llm:
   provider: ${LLM_PROVIDER}
   model: ${LLM_MODEL}
   endpoint: ${LLM_ENDPOINT}
-  api_key_env: $LLM_API_KEY_ENV
+  api_key: ${LLM_API_KEY}
 tools:
   - web-search
   - text-processor
@@ -132,8 +131,7 @@ tools:
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-LLM_API_KEY_ENV=NVIDIA_API_KEY
-NVIDIA_API_KEY=nvapi-your-key-here
+LLM_API_KEY=nvapi-your-key-here
 ```
 
 ### Example 3: Nested Data Structures

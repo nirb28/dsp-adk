@@ -24,9 +24,7 @@ Edit `.env` and configure your LLM provider:
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4
 LLM_ENDPOINT=https://api.openai.com/v1
-LLM_API_KEY_ENV=OPENAI_API_KEY
-
-OPENAI_API_KEY=sk-your-actual-openai-key-here
+LLM_API_KEY=sk-your-actual-openai-key-here
 ```
 
 ### Option B: Groq (Fast and Free)
@@ -35,9 +33,7 @@ OPENAI_API_KEY=sk-your-actual-openai-key-here
 LLM_PROVIDER=groq
 LLM_MODEL=llama-3.1-70b-versatile
 LLM_ENDPOINT=https://api.groq.com/openai/v1
-LLM_API_KEY_ENV=GROQ_API_KEY
-
-GROQ_API_KEY=gsk_your-actual-groq-key-here
+LLM_API_KEY=gsk_your-actual-groq-key-here
 ```
 
 ### Option C: NVIDIA
@@ -46,9 +42,7 @@ GROQ_API_KEY=gsk_your-actual-groq-key-here
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-LLM_API_KEY_ENV=NVIDIA_API_KEY
-
-NVIDIA_API_KEY=nvapi-your-actual-nvidia-key-here
+LLM_API_KEY=nvapi-your-actual-nvidia-key-here
 ```
 
 ## Step 2: Verify Agent Configuration
@@ -61,7 +55,7 @@ llm:
   provider: ${LLM_PROVIDER}      # Resolved from .env
   model: ${LLM_MODEL}            # Resolved from .env
   endpoint: ${LLM_ENDPOINT}      # Resolved from .env
-  api_key_env: ${LLM_API_KEY_ENV}  # Resolved from .env
+  api_key: ${LLM_API_KEY}        # Resolved from .env
 ```
 
 ## Step 3: Start the ADK Server
@@ -156,7 +150,7 @@ curl -X POST http://localhost:8100/agents/conversational-assistant/stream \
 
 **Solution:**
 1. Check that your API key is correct in the `.env` file
-2. Ensure the `LLM_API_KEY_ENV` variable points to the correct environment variable name
+2. Ensure `LLM_API_KEY` is set with your actual API key
 3. For OpenAI: Get a key from https://platform.openai.com/api-keys
 4. For Groq: Get a key from https://console.groq.com/keys
 5. For NVIDIA: Get a key from https://build.nvidia.com/

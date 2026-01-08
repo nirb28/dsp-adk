@@ -220,7 +220,7 @@ llm_config:
   provider: openai_compatible
   model: meta/llama-3.3-70b-instruct
   endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: NVAPI_KEY
+  api_key: ${LLM_API_KEY}
   temperature: 0.1  # Lower for more precise SQL
   max_tokens: 500
 ```

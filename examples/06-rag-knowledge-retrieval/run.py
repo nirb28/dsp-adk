@@ -35,10 +35,10 @@ async def run_interactive_demo():
     rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:9000')
     print(f"RAG Endpoint: {rag_endpoint}")
     
-    api_key = os.getenv('NVIDIA_API_KEY') or os.getenv('LLM_API_KEY') or os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv('LLM_API_KEY')
     if not api_key:
         print("⚠️  No API key found!")
-        print("Please set NVIDIA_API_KEY, LLM_API_KEY, or OPENAI_API_KEY environment variable")
+        print("Please set LLM_API_KEY environment variable")
         return
     
     print("✓ API key configured\n")

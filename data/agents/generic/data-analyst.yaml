@@ -10,7 +10,7 @@ llm:
   provider: ${LLM_PROVIDER}
   model: ${LLM_MODEL}
   endpoint: ${LLM_ENDPOINT}
-  api_key_env: ${LLM_API_KEY_ENV}
+  api_key: ${LLM_API_KEY}
   temperature: 0.2
   max_tokens: 4096
 

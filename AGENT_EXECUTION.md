@@ -87,7 +87,7 @@ llm:
   provider: openai  # or groq, nvidia, anthropic
   model: gpt-4
   endpoint: https://api.openai.com/v1  # optional, uses default
-  api_key_env: OPENAI_API_KEY  # environment variable name
+  api_key: ${LLM_API_KEY}  # resolved from environment
   temperature: 0.7
   max_tokens: 2048
   system_prompt: |
@@ -111,7 +111,7 @@ export NVIDIA_API_KEY="nvapi-..."
 llm:
   provider: openai
   model: gpt-4
-  api_key_env: OPENAI_API_KEY
+  api_key: ${LLM_API_KEY}
 ```
 
 ### Groq
@@ -120,7 +120,7 @@ llm:
   provider: groq
   model: llama-3.1-70b-versatile
   endpoint: https://api.groq.com/openai/v1
-  api_key_env: GROQ_API_KEY
+  api_key: ${LLM_API_KEY}
 ```
 
 ### NVIDIA
@@ -129,7 +129,7 @@ llm:
   provider: nvidia
   model: meta/llama-3.1-70b-instruct
   endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: NVIDIA_API_KEY
+  api_key: ${LLM_API_KEY}
 ```
 
 ### Anthropic (OpenAI-compatible)
@@ -138,7 +138,7 @@ llm:
   provider: anthropic
   model: claude-3-5-sonnet-20241022
   endpoint: https://api.anthropic.com/v1
-  api_key_env: ANTHROPIC_API_KEY
+  api_key: ${LLM_API_KEY}
 ```
 
 ## Python Client Example

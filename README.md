@@ -177,7 +177,7 @@ llm:
   provider: groq  # groq, openai, nvidia, anthropic
   model: llama-3.3-70b-versatile
   endpoint: https://api.groq.com/openai/v1
-  api_key_env: GROQ_API_KEY
+  api_key: ${LLM_API_KEY}
   temperature: 0.7
   max_tokens: 2048
   system_prompt: |

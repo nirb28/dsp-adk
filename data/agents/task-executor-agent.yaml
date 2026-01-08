@@ -8,7 +8,7 @@ llm:
   provider: nvidia
   model: meta/llama-3.3-70b-instruct
   endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: NVIDIA_API_KEY
+  api_key: ${LLM_API_KEY}
   temperature: 0.3
   max_tokens: 4096
   system_prompt: |

@@ -21,19 +21,16 @@ ERROR - LLM API error: Header of type `authorization` was missing
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-LLM_API_KEY_ENV=NVIDIA_API_KEY
-NVIDIA_API_KEY=nvapi-your-actual-key-here
+LLM_API_KEY=nvapi-your-actual-key-here
 ```
 
-2. **Verify the environment variable chain:**
-   - `LLM_API_KEY_ENV=NVIDIA_API_KEY` tells the system which env var contains the key
-   - `NVIDIA_API_KEY=nvapi-xxx` is the actual API key value
-   - The YAML config uses `${LLM_API_KEY_ENV}` which resolves to `NVIDIA_API_KEY`
-   - The code then looks up `NVIDIA_API_KEY` to get the actual key
+2. **Verify the API key is set:**
+   - `LLM_API_KEY` should contain your actual API key
+   - The YAML config uses `${LLM_API_KEY}` which resolves to the actual key value
 
 3. **Check for typos:**
    - Variable names are case-sensitive
-   - Make sure `NVIDIA_API_KEY` matches exactly in both places
+   - Make sure `LLM_API_KEY` is spelled correctly
 
 4. **Restart the server after changing `.env`:**
 ```bash
@@ -49,8 +46,8 @@ LOG_LEVEL=DEBUG
 
 Look for these log messages:
 ```
-[AGENT_EXEC] API key loaded from environment variable 'NVIDIA_API_KEY'  # Good!
-[AGENT_EXEC] API key environment variable 'NVIDIA_API_KEY' is not set or empty  # Bad - check your .env
+[AGENT_EXEC] API key loaded for provider 'nvidia'  # Good!
+[AGENT_EXEC] No API key configured for provider 'nvidia'  # Bad - check your .env
 ```
 
 ### Environment Variable Not Being Substituted
@@ -208,7 +205,7 @@ gpt-3.5-turbo
 4. **Test API key manually:**
 ```bash
 # NVIDIA
-curl -H "Authorization: Bearer $NVIDIA_API_KEY" \
+curl -H "Authorization: Bearer $LLM_API_KEY" \
   https://integrate.api.nvidia.com/v1/models
 
 # Should return list of available models

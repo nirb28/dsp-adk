@@ -58,25 +58,6 @@ async def get_jwt_token(username: str = "admin", password: str = "password") -> 
             return None
 
 
-def resolve_llm_api_key() -> str:
-    """Resolve the LLM API key with sensible fallbacks.
-
-    Many .env setups define LLM_API_KEY as a reference to provider-specific keys
-    (e.g., LLM_API_KEY=${NVIDIA_API_KEY}). However, dotenv only expands variables
-    that are defined earlier in the file. If NVIDIA_API_KEY appears later, the
-    expansion may fail, resulting in LLM_API_KEY being empty.
-
-    This function checks common provider-specific keys as fallbacks.
-    """
-    key = os.getenv("LLM_API_KEY")
-    if key:
-        return key
-    # Fallbacks by common providers
-    for env_name in ("NVIDIA_API_KEY", "NVAPI_KEY", "GROQ_API_KEY", "OPENAI_API_KEY"):
-        val = os.getenv(env_name)
-        if val:
-            return val
-    return ""
 
 
 async def example_1_simple_skill_assignment(client: httpx.AsyncClient):
@@ -93,7 +74,7 @@ async def example_1_simple_skill_assignment(client: httpx.AsyncClient):
             "provider": os.getenv("LLM_PROVIDER", "nvidia"),
             "model": os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             "endpoint": os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            "api_key": resolve_llm_api_key(),
+            "api_key": os.getenv("LLM_API_KEY"),
             "temperature": 0.7,
             "max_tokens": 1024,
             "system_prompt": "You are a helpful coding assistant."
@@ -151,7 +132,7 @@ async def example_2_system_prompt_extension(client: httpx.AsyncClient):
             "provider": os.getenv("LLM_PROVIDER", "nvidia"),
             "model": os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             "endpoint": os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            "api_key": resolve_llm_api_key(),
+            "api_key": os.getenv("LLM_API_KEY"),
             "temperature": 0.3,
             "max_tokens": 2048,
             "system_prompt": "You are a research assistant."
@@ -214,7 +195,7 @@ async def example_3_few_shot_examples(client: httpx.AsyncClient):
             "provider": os.getenv("LLM_PROVIDER", "nvidia"),
             "model": os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             "endpoint": os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            "api_key": resolve_llm_api_key(),
+            "api_key": os.getenv("LLM_API_KEY"),
             "temperature": 0.7,
             "max_tokens": 1024,
             "system_prompt": "You are a Python coding expert."
@@ -273,7 +254,7 @@ async def example_4_orchestration_steps(client: httpx.AsyncClient):
             "provider": os.getenv("LLM_PROVIDER", "nvidia"),
             "model": os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             "endpoint": os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            "api_key": resolve_llm_api_key(),
+            "api_key": os.getenv("LLM_API_KEY"),
             "temperature": 0.5,
             "max_tokens": 2048,
             "system_prompt": "You are a project planning expert."
@@ -336,7 +317,7 @@ async def example_5_multiple_skills(client: httpx.AsyncClient):
             "provider": os.getenv("LLM_PROVIDER", "nvidia"),
             "model": os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
             "endpoint": os.getenv("LLM_ENDPOINT", "https://integrate.api.nvidia.com/v1"),
-            "api_key": resolve_llm_api_key(),
+            "api_key": os.getenv("LLM_API_KEY"),
             "temperature": 0.3,
             "max_tokens": 3072,
             "system_prompt": "You are an expert research analyst."

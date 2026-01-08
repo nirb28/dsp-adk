@@ -14,8 +14,7 @@ The ADK uses a **consistent `${VARIABLE_NAME}` syntax** for environment variable
 
 ```bash
 # .env
-NVIDIA_API_KEY=nvapi-your-actual-key-here
-LLM_API_KEY=${NVIDIA_API_KEY}
+LLM_API_KEY=nvapi-your-actual-key-here
 ```
 
 ### 2. Reference Variables in YAML
@@ -60,10 +59,7 @@ LLM_API_KEY=$NVIDIA_API_KEY
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-
-# API Keys
-NVIDIA_API_KEY=nvapi-your-actual-key-here
-LLM_API_KEY=${NVIDIA_API_KEY}
+LLM_API_KEY=nvapi-your-actual-key-here
 
 # Tool API Keys
 BRAVE_API_KEY=BSAgNHWKHr9_VyP1q4Cx_6A52wGGbuB
@@ -114,67 +110,60 @@ To switch LLM providers, just change which API key is referenced:
 
 ```bash
 # .env
-OPENAI_API_KEY=sk-your-openai-key-here
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4
 LLM_ENDPOINT=https://api.openai.com/v1
-LLM_API_KEY=${OPENAI_API_KEY}
+LLM_API_KEY=sk-your-openai-key-here
 ```
 
 ### For Groq
 
 ```bash
 # .env
-GROQ_API_KEY=gsk_your-groq-key-here
 LLM_PROVIDER=groq
 LLM_MODEL=llama-3.1-70b-versatile
 LLM_ENDPOINT=https://api.groq.com/openai/v1
-LLM_API_KEY=${GROQ_API_KEY}
+LLM_API_KEY=gsk_your-groq-key-here
 ```
 
 ### For NVIDIA
 
 ```bash
 # .env
-NVIDIA_API_KEY=nvapi-your-nvidia-key-here
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-LLM_API_KEY=${NVIDIA_API_KEY}
+LLM_API_KEY=nvapi-your-nvidia-key-here
 ```
 
 ## Best Practices
 
 ### ✅ DO
 
-1. **Use `${VARIABLE}` syntax consistently**
+1. **Use `${VARIABLE}` syntax for references**
    ```bash
-   LLM_API_KEY=${NVIDIA_API_KEY}
    SEARCH_API_KEY=${BRAVE_API_KEY}
+   DB_PATH=${DATA_DIR}/databases/sample.db
    ```
 
-2. **Define variables before referencing them**
+2. **Use clear variable names**
    ```bash
-   NVIDIA_API_KEY=nvapi-xxx  # Define first
-   LLM_API_KEY=${NVIDIA_API_KEY}  # Reference after
+   LLM_API_KEY=your-api-key-here
+   LLM_PROVIDER=nvidia
+   LLM_MODEL=meta/llama-3.1-70b-instruct
    ```
 
-3. **Use descriptive variable names**
+3. **Group related configuration**
    ```bash
-   NVIDIA_API_KEY=nvapi-xxx
-   OPENAI_API_KEY=sk-xxx
-   LLM_API_KEY=${NVIDIA_API_KEY}  # Clear which provider
-   ```
-
-4. **Keep provider-specific keys separate**
-   ```bash
-   # All providers defined
-   OPENAI_API_KEY=sk-xxx
-   GROQ_API_KEY=gsk-xxx
-   NVIDIA_API_KEY=nvapi-xxx
+   # LLM Configuration
+   LLM_PROVIDER=nvidia
+   LLM_MODEL=meta/llama-3.1-70b-instruct
+   LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
+   LLM_API_KEY=nvapi-xxx
    
-   # Switch by changing this one line
-   LLM_API_KEY=${NVIDIA_API_KEY}
+   # Search Configuration
+   BRAVE_API_KEY=brave-xxx
+   SEARCH_API_KEY=${BRAVE_API_KEY}
    ```
 
 ### ❌ DON'T
@@ -191,8 +180,8 @@ LLM_API_KEY=${NVIDIA_API_KEY}
 2. **Don't use inconsistent syntax**
    ```bash
    # Inconsistent
-   LLM_API_KEY=${NVIDIA_API_KEY}
-   SEARCH_API_KEY=BRAVE_API_KEY  # Missing $
+   SEARCH_API_KEY=${BRAVE_API_KEY}
+   DB_PATH=DATA_DIR/db  # Missing $ for reference
    ```
 
 3. **Don't create circular references**
@@ -254,19 +243,20 @@ LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
 LLM_API_KEY=nvapi-your-key-here  # Direct value
 ```
 
-### Pattern 2: Multiple Providers (Switchable)
+### Pattern 2: Provider Switching
 
 ```bash
-# .env - Easy provider switching
-OPENAI_API_KEY=sk-xxx
-GROQ_API_KEY=gsk-xxx
-NVIDIA_API_KEY=nvapi-xxx
-
-# Switch provider by changing these lines
+# .env - Switch provider by changing these values
 LLM_PROVIDER=nvidia
 LLM_MODEL=meta/llama-3.1-70b-instruct
 LLM_ENDPOINT=https://integrate.api.nvidia.com/v1
-LLM_API_KEY=${NVIDIA_API_KEY}
+LLM_API_KEY=nvapi-xxx
+
+# To switch to OpenAI, change to:
+# LLM_PROVIDER=openai
+# LLM_MODEL=gpt-4
+# LLM_ENDPOINT=https://api.openai.com/v1
+# LLM_API_KEY=sk-xxx
 ```
 
 ### Pattern 3: Shared API Keys
@@ -305,8 +295,8 @@ LLM_API_KEY=${PRODUCTION_API_KEY}
 2. **Use `.env.example` for documentation**
    ```bash
    # .env.example - Safe to commit
-   LLM_API_KEY=${NVIDIA_API_KEY}
-   NVIDIA_API_KEY=nvapi-your-key-here
+   LLM_API_KEY=your-api-key-here
+   LLM_PROVIDER=nvidia
    ```
 
 3. **Rotate keys if exposed**
