@@ -64,6 +64,8 @@ class OpenAIProvider(LLMProvider):
     def __init__(self, config: LLMConfig):
         super().__init__(config)
         self.base_url = config.endpoint or "https://api.openai.com/v1"
+        self.settings = get_settings()
+        self.verbose_logging = self.settings.verbose_logging
     
     async def generate(
         self,
@@ -98,6 +100,10 @@ class OpenAIProvider(LLMProvider):
             payload["tool_choice"] = "auto"  # Let LLM decide when to use tools
             payload["parallel_tool_calls"] = False  # Groq compatibility
         
+        if self.verbose_logging:
+            logger.info(f"[LLM_REQUEST:VERBOSE] Endpoint: {self.base_url}/chat/completions")
+            logger.info(f"[LLM_REQUEST:VERBOSE] Payload: {json.dumps(payload, indent=2)}")
+        
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{self.base_url}/chat/completions",
@@ -105,7 +111,12 @@ class OpenAIProvider(LLMProvider):
                 json=payload
             )
             response.raise_for_status()
-            return response.json()
+            response_data = response.json()
+            
+            if self.verbose_logging:
+                logger.info(f"[LLM_RESPONSE:VERBOSE] Response: {json.dumps(response_data, indent=2)}")
+            
+            return response_data
     
     async def stream_generate(
         self,
@@ -141,6 +152,10 @@ class OpenAIProvider(LLMProvider):
             payload["tool_choice"] = "auto"
             payload["parallel_tool_calls"] = False  # Groq compatibility
         
+        if self.verbose_logging:
+            logger.info(f"[LLM_STREAM_REQUEST:VERBOSE] Endpoint: {self.base_url}/chat/completions")
+            logger.info(f"[LLM_STREAM_REQUEST:VERBOSE] Payload: {json.dumps(payload, indent=2)}")
+        
         async with httpx.AsyncClient(timeout=120.0) as client:
             async with client.stream(
                 "POST",
@@ -149,6 +164,10 @@ class OpenAIProvider(LLMProvider):
                 json=payload
             ) as response:
                 response.raise_for_status()
+                
+                if self.verbose_logging:
+                    logger.info(f"[LLM_STREAM_RESPONSE:VERBOSE] Starting stream...")
+                
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         data = line[6:]
