@@ -85,10 +85,13 @@ class OpenAIProvider(LLMProvider):
         }
         
         # Use max_completion_tokens if specified, otherwise fall back to max_tokens
+        # If neither is specified, use default max_tokens=2048 for backward compatibility
         if self.config.max_completion_tokens is not None:
             payload["max_completion_tokens"] = kwargs.get("max_completion_tokens", self.config.max_completion_tokens)
         elif self.config.max_tokens is not None:
             payload["max_tokens"] = kwargs.get("max_tokens", self.config.max_tokens)
+        else:
+            payload["max_tokens"] = kwargs.get("max_tokens", 2048)
         
         if tools:
             payload["tools"] = tools
@@ -125,10 +128,13 @@ class OpenAIProvider(LLMProvider):
         }
         
         # Use max_completion_tokens if specified, otherwise fall back to max_tokens
+        # If neither is specified, use default max_tokens=2048 for backward compatibility
         if self.config.max_completion_tokens is not None:
             payload["max_completion_tokens"] = kwargs.get("max_completion_tokens", self.config.max_completion_tokens)
         elif self.config.max_tokens is not None:
             payload["max_tokens"] = kwargs.get("max_tokens", self.config.max_tokens)
+        else:
+            payload["max_tokens"] = kwargs.get("max_tokens", 2048)
         
         if tools:
             payload["tools"] = tools

@@ -60,15 +60,10 @@ class LLMConfig(BaseModel):
     max_completion_tokens: Optional[int] = Field(default=None, description="Maximum completion tokens (newer models)")
     system_prompt: Optional[str] = Field(default=None, description="System prompt for the agent")
     
-    @model_validator(mode='after')
-    def set_token_limit_default(self):
-        """Set default max_tokens=2048 only if neither parameter is specified."""
-        if self.max_tokens is None and self.max_completion_tokens is None:
-            self.max_tokens = 2048
-        return self
-    
     class Config:
         extra = "allow"
+    
+    model_config = {"exclude_none": True}
 
 
 class AgentConfig(ADKComponentConfig):
