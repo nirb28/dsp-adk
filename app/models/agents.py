@@ -60,10 +60,7 @@ class LLMConfig(BaseModel):
     max_completion_tokens: Optional[int] = Field(default=None, description="Maximum completion tokens (newer models)")
     system_prompt: Optional[str] = Field(default=None, description="System prompt for the agent")
     
-    class Config:
-        extra = "allow"
-    
-    model_config = {"exclude_none": True}
+    model_config = {"extra": "allow", "exclude_none": True}
 
 
 class AgentConfig(ADKComponentConfig):
