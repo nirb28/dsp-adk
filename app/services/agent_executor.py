@@ -104,7 +104,7 @@ class OpenAIProvider(LLMProvider):
             logger.info(f"[LLM_REQUEST:VERBOSE] Endpoint: {self.base_url}/chat/completions")
             logger.info(f"[LLM_REQUEST:VERBOSE] Payload: {json.dumps(payload, indent=2)}")
         
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, verify=False) as client:
             response = await client.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
@@ -914,7 +914,7 @@ class AgentExecutor:
                     # Add response event
                     response_content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
                     response_message = response.get("choices", [{}])[0].get("message", {})
-                    tool_calls_in_response = response_message.get("tool_calls", [])
+                    tool_calls_in_response = response_message.get("tool_calls") or []
                     
                     self.telemetry_service.add_span_event(
                         span_id=llm_span.span_id,
@@ -996,7 +996,11 @@ class AgentExecutor:
                     )
                 
                 # Add assistant message with tool calls to conversation
-                messages.append(choice["message"])
+                # Ensure content is empty string instead of null for tool calls
+                assistant_message = choice["message"].copy()
+                if assistant_message.get("content") is None:
+                    assistant_message["content"] = ""
+                messages.append(assistant_message)
                 
                 # Execute each tool call
                 for idx, tool_call in enumerate(tool_calls, 1):
