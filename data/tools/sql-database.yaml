@@ -65,7 +65,7 @@ implementation:
   databases:
     default:
       type: sqlite
-      path: ${DB_PATH:D:/ds/work/workspace/git/dsp-adk/data/databases/sample.db}
+      path: ${DB_PATH:data/databases/sample.db}
       description: Sample SQLite database with customer and order data
       
       # Schema definition for AI understanding

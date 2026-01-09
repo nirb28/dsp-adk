@@ -42,6 +42,13 @@ class SQLDatabaseTool:
             db_path = db_config.get('path', './data/databases/sample.db')
             # Expand environment variables
             db_path = os.path.expandvars(db_path)
+            
+            # If path is relative, resolve it relative to project root
+            if not os.path.isabs(db_path):
+                # Get project root (parent of tools directory)
+                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                db_path = os.path.join(project_root, db_path)
+            
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             return conn
