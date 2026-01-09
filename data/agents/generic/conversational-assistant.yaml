@@ -13,7 +13,6 @@ llm:
   api_key: ${LLM_API_KEY}
   temperature: 0.7
   max_completion_tokens: 2048
-  max_tokens: 2048
 
 system_prompt: |
   You are a helpful, friendly assistant. Your role is to:

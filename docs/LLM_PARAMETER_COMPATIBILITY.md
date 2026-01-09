@@ -6,6 +6,8 @@ Different LLM models and providers may use different parameter names for control
 
 ## Supported Parameters
 
+**IMPORTANT**: You should only specify ONE of these parameters in your configuration. Setting both will cause API errors.
+
 ### `max_tokens` (Legacy)
 Used by most OpenAI-compatible models including:
 - OpenAI GPT-3.5, GPT-4 (older versions)
@@ -18,6 +20,13 @@ Required by newer OpenAI models:
 - GPT-4o and newer models
 - GPT-4-turbo (latest versions)
 - Other models that follow the updated OpenAI API specification
+
+### Parameter Priority
+
+If both parameters are specified in your configuration:
+- `max_completion_tokens` takes priority and is sent to the API
+- `max_tokens` is ignored
+- However, **this is not recommended** - only specify the parameter your model requires
 
 ## Configuration
 
@@ -170,6 +179,21 @@ llm:
   max_tokens: 2048
 ```
 
+### Error: Both parameters set simultaneously
+
+**Cause**: Your configuration has both `max_tokens` and `max_completion_tokens` specified.
+
+**Solution**: Remove one of them - keep only the parameter your model requires:
+
+```yaml
+llm:
+  # For newer models - keep only this
+  max_completion_tokens: 2048
+  
+  # For older models - keep only this instead
+  # max_tokens: 2048
+```
+
 ## Model-Specific Recommendations
 
 | Provider | Model | Recommended Parameter |
@@ -183,10 +207,11 @@ llm:
 
 ## Best Practices
 
-1. **Check model documentation**: Always verify which parameter your specific model requires
-2. **Test with small requests**: When switching models, test with a simple request first
-3. **Use environment-specific configs**: Keep separate configurations for different model versions
-4. **Monitor API errors**: Watch for parameter-related errors in logs and adjust accordingly
+1. **Use only one parameter**: Never set both `max_tokens` and `max_completion_tokens` in the same configuration
+2. **Check model documentation**: Always verify which parameter your specific model requires
+3. **Test with small requests**: When switching models, test with a simple request first
+4. **Use environment-specific configs**: Keep separate configurations for different model versions
+5. **Monitor API errors**: Watch for parameter-related errors in logs and adjust accordingly
 
 ## Related Documentation
 

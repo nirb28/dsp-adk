@@ -3,7 +3,7 @@ Agent configuration models.
 """
 from enum import Enum
 from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 
 from ..core.base import ADKComponentConfig, ComponentType, ComponentStatus
@@ -56,9 +56,16 @@ class LLMConfig(BaseModel):
     endpoint: Optional[str] = Field(default=None, description="Custom endpoint URL")
     api_key: Optional[str] = Field(default=None, description="API key (resolved from ${VARIABLE} references)")
     temperature: float = Field(default=0.7, description="Temperature for generation")
-    max_tokens: Optional[int] = Field(default=2048, description="Maximum tokens to generate (legacy parameter)")
+    max_tokens: Optional[int] = Field(default=None, description="Maximum tokens to generate (legacy parameter)")
     max_completion_tokens: Optional[int] = Field(default=None, description="Maximum completion tokens (newer models)")
     system_prompt: Optional[str] = Field(default=None, description="System prompt for the agent")
+    
+    @model_validator(mode='after')
+    def set_token_limit_default(self):
+        """Set default max_tokens=2048 only if neither parameter is specified."""
+        if self.max_tokens is None and self.max_completion_tokens is None:
+            self.max_tokens = 2048
+        return self
     
     class Config:
         extra = "allow"
