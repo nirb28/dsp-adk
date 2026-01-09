@@ -56,7 +56,8 @@ class LLMConfig(BaseModel):
     endpoint: Optional[str] = Field(default=None, description="Custom endpoint URL")
     api_key: Optional[str] = Field(default=None, description="API key (resolved from ${VARIABLE} references)")
     temperature: float = Field(default=0.7, description="Temperature for generation")
-    max_tokens: int = Field(default=2048, description="Maximum tokens to generate")
+    max_tokens: Optional[int] = Field(default=2048, description="Maximum tokens to generate (legacy parameter)")
+    max_completion_tokens: Optional[int] = Field(default=None, description="Maximum completion tokens (newer models)")
     system_prompt: Optional[str] = Field(default=None, description="System prompt for the agent")
     
     class Config:

@@ -82,8 +82,13 @@ class OpenAIProvider(LLMProvider):
             "model": self.config.model,
             "messages": messages,
             "temperature": kwargs.get("temperature", self.config.temperature),
-            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
         }
+        
+        # Use max_completion_tokens if specified, otherwise fall back to max_tokens
+        if self.config.max_completion_tokens is not None:
+            payload["max_completion_tokens"] = kwargs.get("max_completion_tokens", self.config.max_completion_tokens)
+        elif self.config.max_tokens is not None:
+            payload["max_tokens"] = kwargs.get("max_tokens", self.config.max_tokens)
         
         if tools:
             payload["tools"] = tools
@@ -116,9 +121,14 @@ class OpenAIProvider(LLMProvider):
             "model": self.config.model,
             "messages": messages,
             "temperature": kwargs.get("temperature", self.config.temperature),
-            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
             "stream": True,
         }
+        
+        # Use max_completion_tokens if specified, otherwise fall back to max_tokens
+        if self.config.max_completion_tokens is not None:
+            payload["max_completion_tokens"] = kwargs.get("max_completion_tokens", self.config.max_completion_tokens)
+        elif self.config.max_tokens is not None:
+            payload["max_tokens"] = kwargs.get("max_tokens", self.config.max_tokens)
         
         if tools:
             payload["tools"] = tools

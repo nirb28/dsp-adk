@@ -12,6 +12,7 @@ llm:
   endpoint: ${LLM_ENDPOINT}
   api_key: ${LLM_API_KEY}
   temperature: 0.7
+  max_completion_tokens: 2048
   max_tokens: 2048
 
 system_prompt: |

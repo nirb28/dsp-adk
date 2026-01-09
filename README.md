@@ -179,7 +179,7 @@ llm:
   endpoint: https://api.groq.com/openai/v1
   api_key: ${LLM_API_KEY}
   temperature: 0.7
-  max_tokens: 2048
+  max_tokens: 2048  # or max_completion_tokens for newer OpenAI models
   system_prompt: |
     You are a helpful assistant.
 

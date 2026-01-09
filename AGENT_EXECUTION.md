@@ -89,7 +89,7 @@ llm:
   endpoint: https://api.openai.com/v1  # optional, uses default
   api_key: ${LLM_API_KEY}  # resolved from environment
   temperature: 0.7
-  max_tokens: 2048
+  max_tokens: 2048  # or max_completion_tokens for newer models
   system_prompt: |
     You are a helpful assistant...
 ```
@@ -140,6 +140,29 @@ llm:
   endpoint: https://api.anthropic.com/v1
   api_key: ${LLM_API_KEY}
 ```
+
+## Parameter Compatibility
+
+Different models may require different parameter names for controlling output length:
+
+- **`max_tokens`**: Used by most models (GPT-4, Groq, NVIDIA, older OpenAI models)
+- **`max_completion_tokens`**: Required by newer OpenAI models (GPT-4o, GPT-4-turbo latest)
+
+The ADK automatically uses the appropriate parameter based on your configuration:
+
+```yaml
+# For newer OpenAI models
+llm:
+  model: gpt-4o
+  max_completion_tokens: 4096  # Use this for GPT-4o
+
+# For most other models
+llm:
+  model: llama-3.1-70b-versatile
+  max_tokens: 2048  # Standard parameter
+```
+
+See [LLM Parameter Compatibility](./docs/LLM_PARAMETER_COMPATIBILITY.md) for detailed information.
 
 ## Python Client Example
 
