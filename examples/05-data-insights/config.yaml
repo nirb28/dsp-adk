@@ -10,13 +10,13 @@ tools:
   - plotly-visualizer
 
 # LLM configuration
-llm:
-  provider: openai_compatible
-  model: meta/llama-3.3-70b-instruct
-  endpoint: https://integrate.api.nvidia.com/v1
-  api_key_env: NVAPI_KEY
-  temperature: 0.7
-  max_tokens: 3000
+# llm:
+#   provider: openai_compatible
+#   model: meta/llama-3.3-70b-instruct
+#   endpoint: https://integrate.api.nvidia.com/v1
+#   api_key_env: NVAPI_KEY
+#   temperature: 0.7
+#   max_tokens: 3000
 
 # Database configuration
 database:

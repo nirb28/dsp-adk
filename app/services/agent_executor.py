@@ -310,6 +310,10 @@ class AgentExecutor:
             if param.enum:
                 param_schema["enum"] = param.enum
             
+            # Handle array items (required by Azure OpenAI)
+            if param.type == "array" and hasattr(param, 'items'):
+                param_schema["items"] = param.items
+            
             properties[param.name] = param_schema
             
             if param.required:

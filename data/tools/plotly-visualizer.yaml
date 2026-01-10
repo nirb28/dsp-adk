@@ -38,6 +38,8 @@ parameters:
     type: array
     description: Data to visualize (array of objects with key-value pairs)
     required: true
+    items:
+      type: object
     
   - name: x_column
     type: string

@@ -200,7 +200,7 @@ SQL Query:"""
             'max_tokens': self.llm_config.get('max_tokens', 500)
         }
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
             response = await client.post(
                 f"{endpoint}/chat/completions",
                 headers=headers,
