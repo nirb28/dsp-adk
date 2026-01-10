@@ -11,12 +11,19 @@ import asyncio
 import httpx
 import hashlib
 import os
+import sys
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from app.services.storage import resolve_env_variables
+
 # Load environment variables
-env_path = Path(__file__).parent.parent.parent / '.env'
+env_path = project_root / '.env'
 load_dotenv(dotenv_path=env_path)
 
 ADK_URL = "http://localhost:8100"
@@ -57,26 +64,6 @@ async def get_jwt_token(username: str = "admin", password: str = "password") -> 
             return None
 
 
-def resolve_env_vars(data):
-    """Recursively resolve environment variable references in data structure."""
-    if isinstance(data, dict):
-        return {k: resolve_env_vars(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [resolve_env_vars(item) for item in data]
-    elif isinstance(data, str):
-        # Handle ${VAR_NAME} or ${VAR_NAME:default} syntax
-        if data.startswith("${") and "}" in data:
-            var_part = data[2:data.index("}")]
-            if ":" in var_part:
-                var_name, default = var_part.split(":", 1)
-                return os.getenv(var_name, default)
-            else:
-                return os.getenv(var_part, data)
-        return data
-    else:
-        return data
-
-
 async def main():
     """Run the simple graph example using YAML configurations."""
     print("=" * 60)
@@ -107,7 +94,7 @@ async def main():
             graph_config = yaml.safe_load(f)
         
         # Resolve environment variables in graph config
-        graph_config = resolve_env_vars(graph_config)
+        graph_config = resolve_env_variables(graph_config)
         
         print(f"   Graph ID: {graph_config['id']}")
         print(f"   Graph Name: {graph_config['name']}")
@@ -126,7 +113,7 @@ async def main():
             example_config = yaml.safe_load(f)
         
         # Resolve environment variables in example config
-        example_config = resolve_env_vars(example_config)
+        example_config = resolve_env_variables(example_config)
         
         print(f"   Example ID: {example_config['id']}")
         print(f"   Example Name: {example_config['name']}")
@@ -154,24 +141,44 @@ async def main():
         # 4. Create an agent that uses the graph
         print("\n4. Creating Agent with Graph from YAML:")
         
-        # Get LLM configuration from environment
-        llm_provider = os.getenv("LLM_PROVIDER", "nvidia")
-        llm_model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
-        llm_endpoint = os.getenv("LLM_ENDPOINT") or os.getenv("NVIDIA_ENDPOINT", "https://integrate.api.nvidia.com/v1")
+        # Get LLM configuration from environment and resolve any ${VAR} references
+        llm_provider = resolve_env_variables(os.getenv("LLM_PROVIDER", "openai"))
+        llm_model = resolve_env_variables(os.getenv("LLM_MODEL", ""))
+        llm_endpoint = resolve_env_variables(os.getenv("LLM_ENDPOINT", ""))
+        llm_api_key = resolve_env_variables(os.getenv("LLM_API_KEY", ""))
         
-        # Resolve LLM_API_KEY
-        llm_api_key_raw = os.getenv("LLM_API_KEY", "")
-        if llm_api_key_raw.startswith("${") and llm_api_key_raw.endswith("}"):
-            var_name = llm_api_key_raw[2:-1]
-            llm_api_key = os.getenv(var_name)
-        else:
-            llm_api_key = llm_api_key_raw
+        # If using NVIDIA provider, use NVIDIA-specific settings
+        if llm_provider == "nvidia":
+            llm_model = llm_model or resolve_env_variables(os.getenv("NVIDIA_LLM_MODEL", "meta/llama-3.1-8b-instruct"))
+            llm_endpoint = llm_endpoint or resolve_env_variables(os.getenv("NVIDIA_ENDPOINT", "https://integrate.api.nvidia.com/v1"))
+            llm_api_key = llm_api_key or resolve_env_variables(os.getenv("NVIDIA_API_KEY", ""))
+        elif llm_provider == "openai":
+            # Azure OpenAI fallback when not explicitly set
+            llm_endpoint = llm_endpoint or resolve_env_variables(os.getenv("AZURE_ENDPOINT", ""))
+            llm_api_key = llm_api_key or resolve_env_variables(os.getenv("AZURE_API_KEY", ""))
+            llm_model = llm_model or "gpt-4.1"
         
+        # Final fallbacks if still missing
+        if not llm_endpoint:
+            llm_endpoint = resolve_env_variables(os.getenv("AZURE_ENDPOINT", "")) or \
+                           resolve_env_variables(os.getenv("NVIDIA_ENDPOINT", ""))
+        if not llm_model:
+            llm_model = "gpt-4.1"
+        
+        # Fallback to other API keys if not set
         if not llm_api_key:
-            llm_api_key = os.getenv("NVIDIA_API_KEY") or os.getenv("GROQ_API_KEY")
+            llm_api_key = resolve_env_variables(os.getenv("AZURE_API_KEY", "")) or \
+                         resolve_env_variables(os.getenv("NVIDIA_API_KEY", "")) or \
+                         resolve_env_variables(os.getenv("GROQ_API_KEY", ""))
         
-        if not llm_api_key:
-            print("   ✗ No LLM API key found")
+        if not llm_api_key or not llm_model or not llm_endpoint:
+            print("   ✗ Missing LLM configuration:")
+            if not llm_api_key:
+                print("      - API key not found")
+            if not llm_model:
+                print("      - Model not specified")
+            if not llm_endpoint:
+                print("      - Endpoint not specified")
             return
         
         agent_id = f"{example_config['id']}-agent"

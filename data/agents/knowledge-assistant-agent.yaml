@@ -30,12 +30,12 @@ system_prompt: |
   Always be helpful, accurate, and transparent about your sources.
 
 llm:
-  provider: ${LLM_PROVIDER:openai_compatible}
-  model: ${LLM_MODEL:meta/llama-3.3-70b-instruct}
-  endpoint: ${LLM_ENDPOINT:https://integrate.api.nvidia.com/v1}
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
   api_key: ${LLM_API_KEY}
   temperature: 0.7
-  max_tokens: 2000
+  max_completion_tokens: 2048
 
 tools:
   - rag-retrieval

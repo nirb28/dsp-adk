@@ -26,13 +26,13 @@ rag:
       description: Machine Learning AI Knowledge, Computer Vision
 
 # LLM configuration
-llm:
-  provider: openai_compatible
-  model: meta/llama-3.3-70b-instruct
-  endpoint: https://integrate.api.nvidia.com/v1
-  api_key: ${LLM_API_KEY}
-  temperature: 0.7
-  max_tokens: 2000
+# llm:
+#   provider: openai_compatible
+#   model: meta/llama-3.3-70b-instruct
+#   endpoint: https://integrate.api.nvidia.com/v1
+#   api_key: ${LLM_API_KEY}
+#   temperature: 0.7
+#   max_tokens: 2000
 
 # Logging
 logging:

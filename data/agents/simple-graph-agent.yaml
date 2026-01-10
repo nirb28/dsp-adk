@@ -11,13 +11,22 @@ enabled: true
 graph_id: research-summarize-graph
 id: simple-graph-agent
 jwt_required: false
+
 llm:
-  api_key: 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
-  endpoint: https://integrate.api.nvidia.com/v1
-  max_tokens: 2048
-  model: openai/gpt-oss-120b
-  provider: nvidia
+  provider: ${LLM_PROVIDER}
+  model: ${LLM_MODEL}
+  endpoint: ${LLM_ENDPOINT}
+  api_key: ${LLM_API_KEY}
   temperature: 0.7
+  max_completion_tokens: 2048
+  
+# llm:
+#   api_key: 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
+#   endpoint: https://integrate.api.nvidia.com/v1
+#   max_tokens: 2048
+#   model: openai/gpt-oss-120b
+#   provider: nvidia
+#   temperature: 0.7
 mcp_servers: []
 memory:
   enabled: false
