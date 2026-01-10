@@ -45,6 +45,8 @@ parameters:
     type: array
     description: List of configuration names for multi-configuration retrieval
     required: false
+    items:
+      type: string
     
   - name: k
     type: integer

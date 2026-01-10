@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from app.services.storage import resolve_env_variables
+
 # Load environment variables from .env file
 env_path = project_root / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -32,10 +34,14 @@ async def run_interactive_demo():
     print("It connects to dsp-rag service to search document collections.\n")
     
     # Check environment variables
-    rag_endpoint = os.getenv('RAG_ENDPOINT', 'http://localhost:9000')
+    rag_endpoint = resolve_env_variables(os.getenv('RAG_ENDPOINT', 'http://localhost:9000'))
     print(f"RAG Endpoint: {rag_endpoint}")
     
-    api_key = os.getenv('LLM_API_KEY')
+    api_key = resolve_env_variables(os.getenv('LLM_API_KEY', ''))
+    if not api_key:
+        api_key = resolve_env_variables(os.getenv('AZURE_API_KEY', '')) or \
+                  resolve_env_variables(os.getenv('NVIDIA_API_KEY', '')) or \
+                  resolve_env_variables(os.getenv('GROQ_API_KEY', ''))
     if not api_key:
         print("⚠️  No API key found!")
         print("Please set LLM_API_KEY environment variable")
