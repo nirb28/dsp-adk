@@ -1,0 +1,36 @@
+agent_type: conversational
+allowed_groups: []
+allowed_roles: []
+capabilities: []
+component_type: agent
+created_at: '2026-01-11T02:52:05.710472Z'
+created_by: admin
+dependencies: []
+description: Minimal agent that greets the user and echoes their message
+enabled: true
+graph_id: hello-langgraph
+id: hello-echo-agent
+jwt_required: false
+llm:
+  api_key: 
+  endpoint: https://dalje-mk60vkf4-eastus2.openai.azure.com/openai/v1
+  max_completion_tokens: 256
+  model: gpt-4.1
+  provider: openai
+  temperature: 0.2
+mcp_servers: []
+memory:
+  enabled: false
+  max_tokens: 4000
+  persistence: false
+  type: buffer
+metadata: {}
+name: Hello Echo Agent
+skills: []
+status: active
+tags:
+- hello
+- langgraph
+tools: []
+updated_at: '2026-01-11T02:52:05.710472Z'
+version: 1.0.0
