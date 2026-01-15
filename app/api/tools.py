@@ -122,10 +122,10 @@ async def get_tool_schema(
 @router.post("", response_model=ToolResponse, status_code=status.HTTP_201_CREATED, summary="Create tool")
 async def create_tool(
     config: ToolConfig,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
     service: ToolService = Depends(get_service)
 ):
-    """Create a new tool configuration. Requires authentication."""
+    """Create a new tool configuration. Authentication optional."""
     response = service.create_tool(config, user)
     if not response.success:
         raise HTTPException(
@@ -139,12 +139,12 @@ async def create_tool(
 async def update_tool(
     tool_id: str,
     updates: dict,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
     service: ToolService = Depends(get_service)
 ):
-    """Update an existing tool configuration."""
+    """Update an existing tool configuration. Authentication optional."""
     existing = service.get_tool(tool_id)
-    if existing:
+    if existing and user:
         has_access, error = service.check_user_access(existing, user)
         if not has_access and not user.is_admin():
             raise HTTPException(

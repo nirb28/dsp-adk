@@ -1,0 +1,115 @@
+name: image_fraud_detector
+type: python
+description: |
+  Comprehensive image fraud detection tool for check analysis.
+  
+  Capabilities:
+  - Signature comparison across multiple samples
+  - Watermark detection and verification
+  - Image tampering detection
+  - Visual anomaly detection
+  - Multi-image comparison with detailed scoring
+  
+  Supports multiple analysis modes:
+  1. analyze_signature - Compare signatures for authenticity
+  2. detect_watermark - Verify watermark and security features
+  3. detect_tampering - Identify image alterations
+  4. comprehensive_analysis - Full fraud analysis combining all methods
+
+python_module: tools.fraud_detection.image_fraud_detector
+python_class: ImageFraudDetector
+
+initialization_params:
+  llm_endpoint:
+    type: string
+    description: OpenAI-compatible vision API endpoint
+    required: true
+    default: ${OPENAI_API_ENDPOINT}
+  llm_api_key:
+    type: string
+    description: API key for vision API authentication
+    required: true
+    default: ${OPENAI_API_KEY}
+  model:
+    type: string
+    description: Vision model to use
+    required: false
+    default: gpt-4-vision-preview
+
+schema:
+  type: object
+  properties:
+    action:
+      type: string
+      enum:
+        - analyze_signature
+        - detect_watermark
+        - detect_tampering
+        - comprehensive_analysis
+      description: Type of fraud analysis to perform
+    primary_check:
+      type: string
+      description: Path to the primary check image being analyzed
+    comparison_signatures:
+      type: array
+      items:
+        type: string
+      description: Paths to known valid signature samples for comparison
+    expected_watermark:
+      type: string
+      description: Description of expected watermark on the check
+    focus_areas:
+      type: array
+      items:
+        type: string
+      description: Specific areas to focus tampering detection on (e.g., amount, payee, date)
+  required:
+    - action
+    - primary_check
+
+examples:
+  - name: Signature Analysis
+    description: Compare check signature against known valid samples
+    input:
+      action: analyze_signature
+      primary_check: data/checks/check_001.jpg
+      comparison_signatures:
+        - data/signatures/sig_001.jpg
+        - data/signatures/sig_002.jpg
+    
+  - name: Watermark Verification
+    description: Verify watermark presence and authenticity
+    input:
+      action: detect_watermark
+      primary_check: data/checks/check_001.jpg
+      expected_watermark: Bank of America watermark with eagle emblem
+    
+  - name: Tampering Detection
+    description: Detect alterations in critical check fields
+    input:
+      action: detect_tampering
+      primary_check: data/checks/check_001.jpg
+      focus_areas:
+        - amount
+        - payee
+        - date
+        - signature
+    
+  - name: Comprehensive Analysis
+    description: Full fraud detection analysis
+    input:
+      action: comprehensive_analysis
+      primary_check: data/checks/check_001.jpg
+      comparison_signatures:
+        - data/signatures/sig_001.jpg
+        - data/signatures/sig_002.jpg
+      expected_watermark: Bank of America watermark
+      focus_areas:
+        - amount
+        - payee
+
+metadata:
+  category: fraud_detection
+  requires_vision_model: true
+  output_format: json
+  typical_response_time: 10-30 seconds

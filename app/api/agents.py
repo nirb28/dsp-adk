@@ -86,13 +86,10 @@ async def get_agent(
 @router.post("", response_model=AgentResponse, status_code=status.HTTP_201_CREATED, summary="Create agent")
 async def create_agent(
     config: AgentConfig,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
     service: AgentService = Depends(get_service)
 ):
-    """
-    Create a new agent configuration.
-    Requires authentication.
-    """
+    """Create a new agent configuration. Authentication optional."""
     response = service.create_agent(config, user)
     if not response.success:
         raise HTTPException(
@@ -106,16 +103,16 @@ async def create_agent(
 async def update_agent(
     agent_id: str,
     updates: dict,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: Optional[AuthenticatedUser] = Depends(get_optional_user),
     service: AgentService = Depends(get_service)
 ):
     """
     Update an existing agent configuration.
-    Requires authentication and access to the agent.
+    Authentication optional.
     """
     # Check existing agent access
     existing = service.get_agent(agent_id)
-    if existing:
+    if existing and user:
         has_access, error = service.check_user_access(existing, user)
         if not has_access and not user.is_admin():
             raise HTTPException(

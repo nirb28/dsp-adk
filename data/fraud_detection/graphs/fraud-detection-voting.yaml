@@ -1,0 +1,117 @@
+name: fraud-detection-voting
+description: Multi-agent voting system for check fraud detection using LangGraph
+graph_type: langgraph
+
+state_schema:
+  check_image_path:
+    type: string
+    description: Path to the check image being analyzed
+  comparison_signatures:
+    type: array
+    description: Paths to known valid signature samples
+  expected_watermark:
+    type: string
+    description: Description of expected watermark
+  
+  # Agent analysis results
+  signature_analysis:
+    type: object
+    description: Results from signature analysis agent
+  watermark_analysis:
+    type: object
+    description: Results from watermark analysis agent
+  tampering_analysis:
+    type: object
+    description: Results from tampering analysis agent
+  
+  # Voting results
+  agent_votes:
+    type: array
+    description: Individual agent recommendations
+  weighted_score:
+    type: number
+    description: Weighted fraud score from all agents
+  final_decision:
+    type: string
+    description: Final decision (APPROVE/REVIEW/REJECT)
+  decision_confidence:
+    type: string
+    description: Confidence in final decision (LOW/MEDIUM/HIGH)
+  decision_reasoning:
+    type: string
+    description: Explanation of the final decision
+  
+  # Metadata
+  analysis_timestamp:
+    type: string
+    description: Timestamp of analysis
+  agents_consensus:
+    type: boolean
+    description: Whether agents reached consensus
+
+nodes:
+  - name: signature_agent_node
+    type: agent
+    agent_name: fraud-signature-agent
+    description: Analyzes signature authenticity
+    
+  - name: watermark_agent_node
+    type: agent
+    agent_name: fraud-watermark-agent
+    description: Verifies watermark and security features
+    
+  - name: tampering_agent_node
+    type: agent
+    agent_name: fraud-tampering-agent
+    description: Detects tampering and alterations
+    
+  - name: voting_node
+    type: function
+    description: Aggregates agent results and makes final decision
+    function: aggregate_votes_and_decide
+    
+  - name: start
+    type: start
+    description: Entry point for fraud detection workflow
+    
+  - name: end
+    type: end
+    description: Exit point with final decision
+
+edges:
+  - from: start
+    to: signature_agent_node
+    description: Begin with signature analysis
+    
+  - from: start
+    to: watermark_agent_node
+    description: Begin with watermark verification
+    
+  - from: start
+    to: tampering_agent_node
+    description: Begin with tampering detection
+    
+  - from: signature_agent_node
+    to: voting_node
+    description: Send signature results to voting
+    
+  - from: watermark_agent_node
+    to: voting_node
+    description: Send watermark results to voting
+    
+  - from: tampering_agent_node
+    to: voting_node
+    description: Send tampering results to voting
+    
+  - from: voting_node
+    to: end
+    description: Output final decision
+
+metadata:
+  parallel_execution: true
+  timeout_seconds: 120
+  requires_all_agents: true
+  decision_weights:
+    signature: 0.35
+    watermark: 0.25
+    tampering: 0.40

@@ -1,0 +1,59 @@
+# Hello World LangGraph
+# Minimal LangGraph showing start -> greet -> end
+
+id: hello-langgraph
+name: Hello World LangGraph
+type: langgraph
+description: Minimal graph that says hello and echoes the user message
+
+nodes:
+  - id: START
+    name: Start
+    type: start
+
+  - id: greeter
+    name: Greeter Agent
+    type: agent
+    agent_id: hello-echo-agent
+    description: Replies with a friendly hello and echoes the user message
+    input_mapping:
+      prompt: "$.message"
+    output_mapping:
+      reply: "$.response"
+
+  - id: END
+    name: End
+    type: end
+
+edges:
+  - id: start_to_greeter
+    source: START
+    target: greeter
+    type: normal
+
+  - id: greeter_to_end
+    source: greeter
+    target: END
+    type: normal
+
+entry_point: START
+
+state_schema:
+  type: object
+  properties:
+    message:
+      type: string
+      description: Incoming user message
+    reply:
+      type: string
+      description: Reply produced by the greeter agent
+  required:
+    - message
+
+metadata:
+  version: "1.0.0"
+  author: example
+  tags:
+    - hello
+    - langgraph
+    - beginner

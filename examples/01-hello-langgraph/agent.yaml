@@ -1,0 +1,36 @@
+# Agent configuration for the Hello LangGraph example
+id: hello-echo-agent
+name: Hello Echo Agent
+description: Minimal agent that greets the user and echoes their message
+version: 1.0.0
+component_type: agent
+agent_type: conversational
+status: active
+enabled: true
+jwt_required: false
+
+llm:
+  provider: ${LLM_PROVIDER:openai}
+  model: ${LLM_MODEL:gpt-4.1-mini}
+  endpoint: ${LLM_ENDPOINT:https://api.openai.com/v1}
+  api_key: ${LLM_API_KEY:}
+  temperature: 0.2
+  max_completion_tokens: 256
+
+# Attach to the hello-langgraph defined in graph.yaml
+graph_id: hello-langgraph
+
+tools: []
+mcp_servers: []
+capabilities: []
+skills: []
+memory:
+  enabled: false
+  type: buffer
+  max_tokens: 4000
+  persistence: false
+
+tags:
+  - hello
+  - langgraph
+metadata: {}

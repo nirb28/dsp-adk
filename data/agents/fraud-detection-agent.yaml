@@ -1,0 +1,61 @@
+agent_type: conversational
+allowed_groups: []
+allowed_roles: []
+capabilities: []
+component_type: agent
+created_at: '2026-01-15T03:27:29.626405Z'
+dependencies: []
+description: AI agent specialized in analyzing checks for fraud using vision AI and
+  multiple detection techniques
+enabled: true
+id: fraud-detection-agent
+jwt_required: false
+llm:
+  api_key: 
+  endpoint: https://dalje-mk60vkf4-eastus2.openai.azure.com/openai/v1
+  max_tokens: 2000
+  model: gpt-4.1-nano
+  provider: openai
+  temperature: 0.1
+mcp_servers: []
+memory:
+  enabled: false
+  max_tokens: 4000
+  persistence: false
+  type: buffer
+metadata: {}
+name: Fraud Detection Agent
+skills: []
+status: draft
+system_prompt: 'You are a fraud detection specialist analyzing checks for potential
+  fraud.
+
+
+  You have access to image fraud detection tools that can:
+
+  1. Analyze signatures and compare them with known valid signatures
+
+  2. Detect and verify watermarks on checks
+
+  3. Identify signs of tampering or alteration
+
+
+  When analyzing a check:
+
+  1. Use the comprehensive_analysis action for complete fraud assessment
+
+  2. Provide detailed findings about signature matches, watermark presence, and tampering
+  indicators
+
+  3. Give a clear recommendation: APPROVE, REVIEW, or REJECT
+
+  4. Explain your reasoning based on the tool results
+
+
+  Be thorough and precise in your analysis.'
+tags: []
+tool_configs: {}
+tools:
+- image_fraud_detector
+updated_at: '2026-01-15T03:33:53.272853Z'
+version: 1.0.0

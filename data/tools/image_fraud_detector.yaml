@@ -1,0 +1,60 @@
+allowed_groups: []
+allowed_roles: []
+component_type: tool
+created_at: '2026-01-15T03:27:29.546111Z'
+dependencies: []
+description: Comprehensive image fraud detection tool for check analysis. Performs
+  signature comparison, watermark verification, and tampering detection using vision
+  AI.
+enabled: true
+fallback_to_user_message_params: []
+jwt_required: false
+implementation:
+  module: tools.fraud_detection.fraud_detector_wrapper
+  function: execute_fraud_detection
+id: image_fraud_detector
+metadata: {}
+name: Image Fraud Detector
+parameters:
+- description: Type of fraud analysis to perform
+  enum:
+  - analyze_signature
+  - detect_watermark
+  - detect_tampering
+  - comprehensive_analysis
+  name: action
+  required: true
+  type: string
+- description: Path to the primary check image being analyzed
+  name: primary_check
+  required: true
+  type: string
+- description: Paths to known valid signature samples for comparison
+  items:
+    type: string
+  name: comparison_signatures
+  required: false
+  type: array
+- description: Description of expected watermark on the check
+  name: expected_watermark
+  required: false
+  type: string
+- description: Specific areas to focus tampering detection on (e.g., amount, payee,
+    date)
+  items:
+    type: string
+  name: focus_areas
+  required: false
+  type: array
+python_class: ''
+python_module: ''
+retry_count: 0
+status: draft
+tags: []
+timeout: 30
+tool_type: python
+updated_at: '2026-01-15T03:33:53.118481Z'
+usage_instructions: Use this tool to analyze checks for fraud. For signature analysis,
+  provide comparison_signatures. For comprehensive analysis, provide all optional
+  parameters.
+version: 1.0.0

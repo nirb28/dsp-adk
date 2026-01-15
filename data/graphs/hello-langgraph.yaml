@@ -1,0 +1,78 @@
+adapters: []
+agents: []
+allowed_groups: []
+allowed_roles: []
+checkpointer_config: {}
+created_at: '2026-01-11T02:52:05.696036Z'
+created_by: admin
+description: Minimal graph that says hello and echoes the user message
+edges:
+- id: start_to_greeter
+  metadata: {}
+  source: START
+  target: greeter
+  type: normal
+- id: greeter_to_end
+  metadata: {}
+  source: greeter
+  target: END
+  type: normal
+entry_point: START
+id: hello-langgraph
+jwt_required: true
+max_iterations: 25
+mcp_servers: []
+metadata:
+  author: example
+  tags:
+  - hello
+  - langgraph
+  - beginner
+  version: 1.0.0
+name: Hello World LangGraph
+nodes:
+- adapters: []
+  config: {}
+  id: START
+  metadata: {}
+  name: Start
+  routes: {}
+  type: start
+- adapters: []
+  agent_id: hello-echo-agent
+  config: {}
+  description: Replies with a friendly hello and echoes the user message
+  id: greeter
+  input_mapping:
+    prompt: $.message
+  metadata: {}
+  name: Greeter Agent
+  output_mapping:
+    reply: $.response
+  routes: {}
+  type: agent
+- adapters: []
+  config: {}
+  id: END
+  metadata: {}
+  name: End
+  routes: {}
+  type: end
+state_schema:
+  fields: {}
+  properties:
+    message:
+      description: Incoming user message
+      type: string
+    reply:
+      description: Reply produced by the greeter agent
+      type: string
+  required:
+  - message
+  type: object
+streaming: true
+tags: []
+timeout: 300
+tools: []
+type: langgraph
+updated_at: '2026-01-11T02:52:05.696036Z'
