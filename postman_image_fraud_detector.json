@@ -1,0 +1,237 @@
+{
+  "info": {
+    "name": "ADK - Execute Image Fraud Detector Tool",
+    "description": "Sample Postman collection for executing the image_fraud_detector tool",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Execute - Comprehensive Analysis",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"arguments\": {\n    \"action\": \"comprehensive_analysis\",\n    \"primary_check\": \"/path/to/check_image.jpg\",\n    \"comparison_signatures\": [\n      \"/path/to/signature1.jpg\",\n      \"/path/to/signature2.jpg\"\n    ],\n    \"expected_watermark\": \"VOID\",\n    \"focus_areas\": [\n      \"amount\",\n      \"payee\",\n      \"date\"\n    ]\n  },\n  \"mock\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "execute"
+          ]
+        },
+        "description": "Execute comprehensive fraud analysis on a check image with all parameters"
+      },
+      "response": []
+    },
+    {
+      "name": "Execute - Signature Analysis Only",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"arguments\": {\n    \"action\": \"analyze_signature\",\n    \"primary_check\": \"/path/to/check_image.jpg\",\n    \"comparison_signatures\": [\n      \"/path/to/known_signature1.jpg\",\n      \"/path/to/known_signature2.jpg\"\n    ]\n  },\n  \"mock\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "execute"
+          ]
+        },
+        "description": "Execute signature analysis only"
+      },
+      "response": []
+    },
+    {
+      "name": "Execute - Watermark Detection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"arguments\": {\n    \"action\": \"detect_watermark\",\n    \"primary_check\": \"/path/to/check_image.jpg\",\n    \"expected_watermark\": \"VOID\"\n  },\n  \"mock\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "execute"
+          ]
+        },
+        "description": "Execute watermark detection only"
+      },
+      "response": []
+    },
+    {
+      "name": "Execute - Tampering Detection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"arguments\": {\n    \"action\": \"detect_tampering\",\n    \"primary_check\": \"/path/to/check_image.jpg\",\n    \"focus_areas\": [\n      \"amount\",\n      \"payee\"\n    ]\n  },\n  \"mock\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "execute"
+          ]
+        },
+        "description": "Execute tampering detection with specific focus areas"
+      },
+      "response": []
+    },
+    {
+      "name": "Execute - Mock Mode (Testing)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"arguments\": {\n    \"action\": \"comprehensive_analysis\",\n    \"primary_check\": \"/path/to/check_image.jpg\",\n    \"comparison_signatures\": [\n      \"/path/to/signature1.jpg\"\n    ],\n    \"expected_watermark\": \"VOID\",\n    \"focus_areas\": [\"amount\"]\n  },\n  \"mock\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "execute"
+          ]
+        },
+        "description": "Execute in mock mode for testing without actual execution"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Tool Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector"
+          ]
+        },
+        "description": "Get the tool configuration and schema"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Tool Schema",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8100/tools/image_fraud_detector/schema",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8100",
+          "path": [
+            "tools",
+            "image_fraud_detector",
+            "schema"
+          ]
+        },
+        "description": "Get the OpenAI-compatible tool schema"
+      },
+      "response": []
+    }
+  ]
+}

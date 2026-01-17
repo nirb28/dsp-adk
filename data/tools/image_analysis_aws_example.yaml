@@ -1,0 +1,114 @@
+id: image_analysis
+name: Image Analysis Tool (AWS)
+description: Image analysis using AWS Rekognition
+tool_type: python
+
+parameters:
+  - name: image_path
+    type: string
+    description: Path to the image file to analyze (local file path or URL). Either image_path or image_data must be provided.
+    required: false
+  
+  - name: image_data
+    type: string
+    description: Base64-encoded image data. Either image_path or image_data must be provided.
+    required: false
+  
+  - name: analysis_type
+    type: string
+    description: Type of analysis to perform on the image
+    required: false
+    default: general
+    enum:
+      - general
+      - object_detection
+      - text_extraction
+      - face_detection
+      - image_classification
+
+  - name: options
+    type: object
+    description: Additional options specific to the analysis type
+    required: false
+
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+    analysis_type:
+      type: string
+    image_source:
+      type: string
+    results:
+      type: object
+    metadata:
+      type: object
+    error:
+      type: string
+
+implementation:
+  module: app.tools.image_analysis
+  function: analyze_image
+  safe_mode: true
+
+vision_ai:
+  # AWS Rekognition Configuration
+  provider: aws
+  
+  # AWS region
+  aws_region: "us-east-1"
+  
+  # AWS credentials (use environment variables for security)
+  aws_access_key_id: "${AWS_ACCESS_KEY_ID}"
+  aws_secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+
+metadata:
+  version: "1.0.0"
+  author: "ADK Team"
+  created: "2024-01-16"
+  updated: "2024-01-16"
+  note: "AWS Rekognition integration - requires AWS credentials in environment"
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 50
+
+timeout: 30
+retry_count: 1
+
+tags:
+  - image
+  - analysis
+  - vision
+  - ai
+  - aws
+  - production
+
+usage_instructions: |
+  AWS Rekognition integration for production use.
+  
+  Setup:
+  1. Create AWS account and enable Rekognition
+  2. Create IAM user with Rekognition permissions
+  3. Get access key ID and secret access key
+  4. Set environment variables:
+     export AWS_ACCESS_KEY_ID="your-key-id"
+     export AWS_SECRET_ACCESS_KEY="your-secret-key"
+  5. Install boto3: pip install boto3
+  6. Restart the ADK server
+  
+  Supported analysis types:
+  - general: Image info + detected labels
+  - object_detection: Detect objects with bounding boxes
+  - text_extraction: OCR text extraction
+  - face_detection: Face detection with attributes
+  - image_classification: Label detection and categorization
+  
+  Note: color_analysis and quality_assessment are not supported by AWS Rekognition
+
+component_type: tool
+enabled: true
+status: ready
+version: 1.0.0

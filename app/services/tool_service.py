@@ -167,7 +167,7 @@ class ToolService:
         """List all tools with optional filtering."""
         try:
             logger.debug(f"[TOOL_LIST] Listing tools: type={tool_type}, tags={tags}")
-            all_tools = self.storage.load_all()
+            all_tools = self.storage.list_all()
             logger.debug(f"[TOOL_LIST] Loaded {len(all_tools)} tools from storage")
             
             # Apply filters

@@ -1,0 +1,117 @@
+id: image_analysis
+name: Image Analysis Tool
+description: General-purpose image analysis tool that can perform various types of analysis on images including object detection, text extraction, face detection, and image classification
+tool_type: python
+
+parameters:
+  - name: image_path
+    type: string
+    description: Path to the image file to analyze (local file path or URL). Either image_path or image_data must be provided.
+    required: false
+  
+  - name: image_data
+    type: string
+    description: Base64-encoded image data. Either image_path or image_data must be provided.
+    required: false
+  
+  - name: analysis_type
+    type: string
+    description: Type of analysis to perform on the image
+    required: false
+    default: general
+    enum:
+      - general
+      - object_detection
+      - text_extraction
+      - face_detection
+      - image_classification
+      - color_analysis
+      - quality_assessment
+
+  - name: options
+    type: object
+    description: Additional options specific to the analysis type
+    required: false
+
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+    analysis_type:
+      type: string
+    image_path:
+      type: string
+    results:
+      type: object
+    metadata:
+      type: object
+    error:
+      type: string
+
+implementation:
+  module: app.tools.image_analysis
+  function: analyze_image
+  safe_mode: true
+
+vision_ai:
+  # Vision AI provider configuration
+  # Options: "mock" (default), "azure", "aws", "google"
+  provider: mock
+  
+  # Azure Computer Vision settings (when provider=azure)
+  # azure_endpoint: "https://YOUR_RESOURCE.cognitiveservices.azure.com/"
+  # azure_api_key: "${AZURE_VISION_API_KEY}"
+  # azure_api_version: "2023-10-01"
+  # azure_face_endpoint: "https://YOUR_FACE_RESOURCE.cognitiveservices.azure.com/"  # Optional
+  
+  # AWS Rekognition settings (when provider=aws)
+  # aws_region: "us-east-1"
+  # aws_access_key_id: "${AWS_ACCESS_KEY_ID}"
+  # aws_secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  
+  # Google Cloud Vision settings (when provider=google)
+  # google_api_key: "${GOOGLE_CLOUD_API_KEY}"
+  # google_project_id: "your-project-id"  # Optional
+
+metadata:
+  version: "1.0.0"
+  author: "ADK Team"
+  created: "2024-01-15"
+  updated: "2024-01-16"
+  note: "Supports both mock and real vision AI providers (Azure, AWS, Google)"
+
+jwt_required: false
+allowed_groups: []
+allowed_roles: []
+rate_limit: 50
+
+timeout: 30
+retry_count: 1
+
+tags:
+  - image
+  - analysis
+  - vision
+  - ai
+  - utility
+
+metadata:
+  version: "1.0.0"
+  author: "ADK Team"
+  category: "vision"
+
+usage_instructions: |
+  Use this tool to analyze images with various analysis types:
+  - general: Basic image information (dimensions, format, size)
+  - object_detection: Detect and identify objects in the image
+  - text_extraction: Extract text from the image (OCR)
+  - face_detection: Detect faces and facial features
+  - image_classification: Classify the image into categories
+  - color_analysis: Analyze dominant colors and color distribution
+  - quality_assessment: Assess image quality (blur, brightness, contrast)
+
+component_type: tool
+enabled: true
+status: ready
+version: 1.0.0
